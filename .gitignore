@@ -1,0 +1,18 @@
+### Python ###
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# OS X stuff
+*.DS_Store
+
+# VSCode
+.vscode
+
+# RTC
+.jupyter_ystore.db
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
