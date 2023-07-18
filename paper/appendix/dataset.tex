@@ -1,0 +1,99 @@
+\section{Appendix -- Dataset Details}
+The following details in this appendix are for clarification purposes.
+All examples in this appendix are created via PySpark using dataframes.
+
+\subsection{Using PySpark to Load Data}
+All example code was created using Jupyter Notebooks creating a PySpark session. The deails of setting up such session are below in the code example. All subsequent details are derived from the \texttt{sc}\footnote{sc = Spark Session}.
+\begin{minted}{python}
+# Setup Spark Session
+# Spark Session Name: Qualyfing_Exam
+from pyspark.sql import SparkSession
+
+# Get Imports Needed
+from pyspark.sql.functions import col, udf
+
+# Get Datatypes needed for DataFrame manipulation
+from pyspark.sql.types import IntegerType, StringType
+
+# Setup Spark Session
+sc = SparkSession \
+        .builder \
+        .master("local[*]") \
+        .appName("Qualyfing_Exam") \
+        .getOrCreate()
+\end{minted}
+
+
+\subsection{Details on English Dataset}
+The English dataset based on tweets\footnote{Tweets from Twitter} are saved as a \texttt{csv}\footnote{csv = Comma Separated Values} file. The following are some simply details on the laod and processing of such file.
+\begin{minted}{python}
+# Read csv file to Saprk dataframe
+df_english = sc.read.csv("data/english.csv", header=True, inferSchema=True)
+# Group by a column and count the occurrences in df_english
+count_english = df_english.groupBy('sentiment').count()
+
+# Show the result for df_english
+count_english.show()
++----------+-----+
+| sentiment|count|
++----------+-----+
+|   boredom|  179|
+|      love| 3842|
+|    relief| 1526|
+|       fun| 1776|
+|      hate| 1323|
+|   neutral| 8638|
+|     anger|  110|
+| happiness| 5209|
+|  surprise| 2187|
+|   sadness| 5165|
+|     worry| 8459|
+|enthusiasm|  759|
+|     empty|  827|
++----------+-----+
+
+\end{minted}
+
+\subsection{Details on German Dataset}
+The German dataset was downloaded from the ETH's\footnote{ETH (German: Eidgenössische Technische Hochschule) or Swiss Federal Institute of Technology} servers via "link" as a \texttt{JSON} file.
+\begin{minted}{python}
+# Read JSON file to Saprk dataframe
+df_german = sc.read.json("data/german.json")
+
+# Group by a column and count the occurrences in df_german
+count_german = df_german.groupBy('article_emotion').count()
+
+# Show the result for df_german
+count_german.show(truncate=0)
++----------------------------------+-----+
+|article_emotion                   |count|
++----------------------------------+-----+
+|[Ärger, Antizipation, Traurigkeit]|1    |
+|[Überraschung, Vertrauen]         |14   |
+|[Überraschung, Freude]            |15   |
+|[Ärger, Vertrauen]                |7    |
+|[Ekel, Traurigkeit]               |4    |
+|[Keine, Antizipation]             |5    |
+|[Vertrauen]                       |130  |
+|[Freude]                          |58   |
+|[Ärger, Antizipation]             |31   |
+|[Ärger]                           |114  |
+|[Überraschung]                    |154  |
+|[Antizipation, Traurigkeit]       |15   |
+|[Antizipation, Freude, Vertrauen] |2    |
+|[Vertrauen, Angst]                |5    |
+|[Traurigkeit]                     |101  |
+|[Antizipation]                    |413  |
+|[Traurigkeit, Vertrauen]          |7    |
+|[Antizipation, Vertrauen]         |104  |
+|[Ärger, Traurigkeit, Angst]       |1    |
+|[Unklar]                          |314  |
++----------------------------------+-----+
+
+\end{minted}
+
+
+
+
+
+\clearpage
