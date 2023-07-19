@@ -21,3 +21,8 @@ __pycache__/
 # IPython
 profile_default/
 ipython_config.py
+
+# PSpark
+**/*_SUCCESS.crc
+**/.part-*.crc
+**/_SUCCESS
