@@ -54,20 +54,21 @@ df_english_filtered = df_english.filter(col("sentiment").isin(filter_values))
 df_english_filtered = df_english_filtered.drop("tweet_id")
 
 # Rename Columns
-df_english_filtered = df_english_filtered.withColumnRenamed("sentiment", "emotion")
-df_english_filtered = df_english_filtered.withColumnRenamed("content", "sentence")
+df_english_filtered = df_english_filtered.withColumnRenamed("sentiment", "emotion_en")
+df_english_filtered = df_english_filtered.withColumnRenamed("content", "sentence_en")
 
 # Make sure the column order to the same for both german and english csv files
-df_english_filtered = df_english_filtered.select('sentence', 'emotion')
+df_english_filtered = df_english_filtered.select('sentence_en', 'emotion_en')
 
 print(f'Count (filtered): {df_english_filtered.count()}')
 
 # Group By for Details & Count
-df_english_grouped = df_english_filtered.groupBy('emotion').count()
+df_english_grouped = df_english_filtered.groupBy('emotion_en').count()
 
 # Show Groupings and Respetive Counts
 print('\nGrouped & Count by "emotion"')
 df_english_grouped.show(truncate=0)
+
 
 # Save Dataframe to CSV
 directory_path = 'data/spark_data_parts'
@@ -77,6 +78,26 @@ file_pattern = 'part-00000*.csv'
 file_path = glob.glob(directory_path + '/' + file_pattern)[0]
 
 shutil.move(file_path, './data/data_en.csv')
+
+Count (raw): 40000
+English Source Columns: ['tweet_id', 'sentiment', 'content']
+
+Count (filtered): 35692
+
+Grouped & Count by "emotion"
++----------+-----+
+|emotion_en|count|
++----------+-----+
+|love      |3842 |
+|hate      |1323 |
+|neutral   |8638 |
+|anger     |110  |
+|happiness |5209 |
+|surprise  |2187 |
+|sadness   |5165 |
+|worry     |8459 |
+|enthusiasm|759  |
++----------+-----+
 \end{minted}
 \clearpage
 
@@ -99,10 +120,10 @@ print(f'German Source Columns: {df_german.columns}\n')
 # We Need to "split" the "artice_emotion" column since the ETH team listed
 # multiple emotions in one column
 # In order to "explode" the column to it's distinct rows
-df_german_exploded = df_german.select('*', explode('article_emotion').alias('emotion'))
+df_german_exploded = df_german.select('*', explode('article_emotion').alias('emotion_de'))
 
 # Rename Column
-df_german_exploded = df_german_exploded.withColumnRenamed("title", "sentence")
+df_german_exploded = df_german_exploded.withColumnRenamed("title", "sentence_de")
 
 # Remove unnecessary column
 df_german_exploded = df_german_exploded.drop("article_id")
@@ -113,12 +134,12 @@ df_german_exploded = df_german_exploded.drop("article_emotion")
 df_german_exploded = df_german_exploded.drop("snippet")
 
 # Make sure the column order to the same for both german and english csv files
-df_german_exploded = df_german_exploded.select('sentence', 'emotion')
+df_german_exploded = df_german_exploded.select('sentence_de', 'emotion_de')
 
 print(f'Count (filtered): {df_german_exploded.count()}')
 
 # Group By for Details & Count
-df_german_grouped = df_german_exploded.groupBy('emotion').count()
+df_german_grouped = df_german_exploded.groupBy('emotion_de').count()
 
 # Show Groupings and Respetive Counts
 print('\nGrouped & Count by "emotion"')
@@ -133,7 +154,128 @@ file_pattern = 'part-00000*.csv'
 file_path = glob.glob(directory_path + '/' + file_pattern)[0]
 
 shutil.move(file_path, './data/data_de.csv')
+
+Count (raw): 1970
+German Source Columns: ['article_emotion', 'article_id', 'article_stance', 'paragraphs', 'snippet', 'source', 'title']
+
+Count (filtered): 2568
+
+Grouped & Count by "emotion"
++------------+-----+
+|emotion_de  |count|
++------------+-----+
+|Vertrauen   |316  |
+|Freude      |140  |
+|Ärger       |226  |
+|Überraschung|369  |
+|Traurigkeit |184  |
+|Antizipation|774  |
+|Unklar      |314  |
+|Angst       |154  |
+|Ekel        |29   |
+|Keine       |62   |
++------------+-----+
 \end{minted}
+\clearpage
 
 
+\subsection{Details on Extending \& Translation}
+\label{appendix:dataset_translation}
+Details on translation and extending the datasets.
+\begin{minted}[fontsize=\small]{python}
+# **************************************
+# *** English <-> German Emotion Key ***
+# **************************************
+
+
+from pyspark.sql.functions import col, udf, split, explode, lit
+from pyspark.sql.types import IntegerType, StringType, StructType, StructField, StringType
+
+# Emotion Dictionary English <-> German
+# This key/value setup was previsoulsy created for linking purposes
+emotion_key = {
+    "boredom"    : "---",
+    "love"       : "Vertrauen",
+    "relief"     : "---",
+    "fun"        : "---",
+    "hate"       : "Ekel",
+    "neutral"    : "Unklar",
+    "anger"      : "Ärger",
+    "happiness"  : "Freude",
+    "surprise"   : "Überraschung", 
+    "sadness"    : "Traurigkeit", 
+    "worry"      : "Angst",
+    "enthusiasm" : "Antizipation", 
+    "empty "     : "---",
+    "---"        : "Keine",
+}
+
+# Create the schema for the DataFrame
+schema = StructType([
+    StructField("emotion_en", StringType(), nullable=False),
+    StructField("emotion_de", StringType(), nullable=False)
+])
+
+# Convert the dictionary to a list of tuples
+data = [(key, value) for key, value in emotion_key.items()]
+
+# Create the PySaprk DataFrame
+df_emotion_key = sc.createDataFrame(data, schema)
+
+df_emotion_key.show()
+
+# Extend the English and German onto the datasets
+df_german_exploded = df_german_exploded.join(df_emotion_key, on="emotion_de", how="left")
+df_english_filtered = df_english_filtered.join(df_emotion_key, on="emotion_en", how="left")
+
+# New sentence column
+df_german_exploded = df_german_exploded.withColumn("sentence_en", lit(None))
+df_english_filtered = df_english_filtered.withColumn("sentence_de", lit(None))
+
+df_german_exploded.show()
+df_english_filtered.show()
+
+
+# Using Deep Translator to proxy to Google Translate
+from deep_translator import GoogleTranslator
+
+
+# Define Tranlation Functions
+def translate_en_to_de(row):
+    translated = GoogleTranslator(source='en', target='de').translate(row["sentence_en"])
+    row["sentence_de"] = translated
+
+def translate_de_to_en(row):
+    translated = GoogleTranslator(source='de', target='en').translate(row["sentence_en"])
+    row["sentence_en"] = translated
+    
+
+df_german_exploded.foreach(translate_de_to_en)  
+
++----------+------------+
+|emotion_en|  emotion_de|
++----------+------------+
+|   boredom|         ---|
+|      love|   Vertrauen|
+|    relief|         ---|
+|       fun|         ---|
+|      hate|        Ekel|
+|   neutral|      Unklar|
+|     anger|       Ärger|
+| happiness|      Freude|
+|  surprise|Überraschung|
+|   sadness| Traurigkeit|
+|     worry|       Angst|
+|enthusiasm|Antizipation|
+|    empty |         ---|
+|       ---|       Keine|
++----------+------------+
+
++------------+--------------------+----------+----------+-----------+----------+
+|  emotion_de|         sentence_de|emotion_en|emotion_en|sentence_en|emotion_en|
++------------+--------------------+----------+----------+-----------+----------+
+|   Vertrauen|Adoptiert zu sein...|      love|      love|       null|      love|
+|      Freude|Österreichs Verfa...| happiness| happiness|       null| happiness|
+|      Freude|Visana gewinnt er...| happiness| happiness|       null| happiness|
+\end{minted}
 \clearpage
