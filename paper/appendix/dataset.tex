@@ -1,32 +1,56 @@
 \section{Appendix -- Dataset Details}
 The following details in this appendix are for clarification purposes.
-All examples in this appendix are created via PySpark using dataframes.
+All examples in this appendix are created via Panda and PySpark using data frames.
 
-\subsection{Using PySpark to Load Data}
-All example code was created using Jupyter Notebooks creating a PySpark session. The details of setting up such session are below in the code example. All subsequent details are derived from the \texttt{sc}\footnote{sc = Spark Session}.
+\subsection{Translation Setup}
+All example code was created using Jupyter Notebooks.
 \begin{minted}[fontsize=\small]{python}
-# General Imports
-import glob
-import shutil
+# *********************
+# *** Setup Section ***
+# *********************
 
-# Setup Spark Session
-from pyspark.sql import SparkSession
+import pandas as pd
 
-# Get Spark Functions Needed
-from pyspark.sql.functions import col, udf, split, explode
+# Emotion DataFrame
+# This was predtermined by review of the emotion from English to German
+emotion_key = {
+    "boredom": "---",
+    "love": "Vertrauen",
+    "relief": "---",
+    "fun": "---",
+    "hate": "Ekel",
+    "neutral": "Unklar",
+    "anger": "Ärger",
+    "happiness": "Freude",
+    "surprise": "Überraschung",
+    "sadness": "Traurigkeit",
+    "worry": "Angst",
+    "enthusiasm": "Antizipation",
+    "empty ": "---",
+    "---": "Keine"
+}
 
-# Get Datatypes needed for DataFrame manipulation
-from pyspark.sql.types import IntegerType, StringType
+# Create a DataFrame from the emotion_key dictionary
+df_emotions = pd.DataFrame(emotion_key.items(), columns=['emotion_en', 'emotion_de'])
 
-# Setup Spark Session
-sc = SparkSession \
-        .builder \
-        .master("local[*]") \
-        .appName("data_clean_up") \
-        .getOrCreate()
 
-# Print Spark Version being run
-print("Spark V: ", sc.version)
+# *******************
+# *** Translation ***
+# *******************
+from googletrans import Translator
+import time
+
+# This google API take a Sentence and converts to German
+def translate(sentence, dest_lang):
+    try:
+        translator = Translator()
+        translator.raise_Exception = True
+        translation = translator.translate(sentence, dest=dest_lang)
+        time.sleep(0.5)  # Add a 1-second delay
+        return translation.text
+    except Exception as e:
+        print(f"Translation Error: {e}")
+        return None
 \end{minted}
 \clearpage
 
@@ -39,65 +63,51 @@ The English dataset is based on tweets\footnote{Tweets from Twitter} that are sa
 # *** English Data Preparations ***
 # *********************************
 
+import pandas as pd
+from tqdm import tqdm
+
+
 # Load English CSV File into a Dataframe
-df_english = sc.read.csv("data/english.csv", header=True, inferSchema=True)
-print(f'Count (raw): {df_english.count()}')
+df_en = pd.read_csv("data/english.csv")
+print(f'Count (raw): {len(df_en)}')
 
 # Print Columns
-print(f'English Source Columns: {df_english.columns}\n')
+print(f'English Source Columns: {df_en.columns}\n')
 
-# Filter only lavbels that we mathc with the German counter parts
+# Filter only labels that we matched with the German counter part JSON File
 filter_values = ["love", "hate", "neutral", "anger", "happiness", "surprise", "sadness", "worry", "enthusiasm"]
-df_english_filtered = df_english.filter(col("sentiment").isin(filter_values))
+df_en = df_en[df_en["sentiment"].isin(filter_values)]
+
+# Find Empty Sentence Values
+df_en = df_en[df_en["content"].notnull() & (df_en["content"].str.strip() != '')]
 
 # Remove unnecessary column
-df_english_filtered = df_english_filtered.drop("tweet_id")
+df_en = df_en.drop("tweet_id", axis=1)
 
 # Rename Columns
-df_english_filtered = df_english_filtered.withColumnRenamed("sentiment", "emotion_en")
-df_english_filtered = df_english_filtered.withColumnRenamed("content", "sentence_en")
+df_en = df_en.rename(columns = {'sentiment': 'emotion_en', 'content': 'sentence_en'})
 
-# Make sure the column order to the same for both german and english csv files
-df_english_filtered = df_english_filtered.select('sentence_en', 'emotion_en')
+# Merge German Emotions onto English
+df_en = pd.merge(df_en, df_emotions, on='emotion_en', how='left')
 
-print(f'Count (filtered): {df_english_filtered.count()}')
+# Add German Sentence Column
+df_en["sentence_de"] = ""
 
-# Group By for Details & Count
-df_english_grouped = df_english_filtered.groupBy('emotion_en').count()
+# Randomly select 1500 rows
+df_en = df_en.sample(n=1500, random_state=2023)
 
-# Show Groupings and Respetive Counts
-print('\nGrouped & Count by "emotion"')
-df_english_grouped.show(truncate=0)
+df_en.to_csv('./data/pd_en.csv', index=False)
 
 
-# Save Dataframe to CSV
-directory_path = 'data/spark_data_parts'
-df_english_filtered.coalesce(1).write.csv(directory_path, header=True, mode="overwrite")
+# Iterate over the rows with tqdm to show the progress
+for index, row in tqdm(df_en.iterrows(), total=df_en.shape[0]):
+    # Call Translation
+    sentence = translate(row["sentence_en"], 'de')
+    # Save Sentence on Column
+    df_en.at[index, 'sentence_de'] = sentence
 
-file_pattern = 'part-00000*.csv'
-file_path = glob.glob(directory_path + '/' + file_pattern)[0]
 
-shutil.move(file_path, './data/data_en.csv')
-
-Count (raw): 40000
-English Source Columns: ['tweet_id', 'sentiment', 'content']
-
-Count (filtered): 35692
-
-Grouped & Count by "emotion"
-+----------+-----+
-|emotion_en|count|
-+----------+-----+
-|love      |3842 |
-|hate      |1323 |
-|neutral   |8638 |
-|anger     |110  |
-|happiness |5209 |
-|surprise  |2187 |
-|sadness   |5165 |
-|worry     |8459 |
-|enthusiasm|759  |
-+----------+-----+
+df_en.to_csv('./data/pd_en_translated.csv', index=False)
 \end{minted}
 \clearpage
 
@@ -105,177 +115,62 @@ Grouped & Count by "emotion"
 \label{appendix:dataset_german}
 The German dataset was downloaded from the ETH's\footnote{ETH (German: Eidgenössische Technische Hochschule) or Swiss Federal Institute of Technology} servers via "link" as a \texttt{JSON} file. Since the the file was \texttt{JSON} we will need to filter and explode the file based on teh emotions that are attached to it.
 \begin{minted}[fontsize=\small]{python}
-# ********************************
+# *********************************
 # *** German Data Preparations ***
-# ********************************
+# *********************************
 
-# Load German JSON File into a Dataframe
-df_german = sc.read.json("data/german.json")
-print(f'Count (raw): {df_german.count()}')
+import pandas as pd
+from tqdm import tqdm
+
+
+# Load German JSON File into a DataFrame
+df_de = pd.read_json("data/german.json", lines=True)
+print(f'Count (raw): {len(df_de)}')
 
 # Print Columns
-print(f'German Source Columns: {df_german.columns}\n')
+print(f'German Source Columns: {df_de.columns}\n')
+
+# Explode the "article_emotion" column to distinct rows
+df_de = df_de.explode('article_emotion')
+
+# Filter only labels that we matched with the German counter part JSON File
+filter_values = ["Vertrauen","Ekel", "Unklar", "Ärger", "Freude", "Überraschung", "Traurigkeit", "Angst", "Antizipation"]
+df_de = df_de[df_de["article_emotion"].isin(filter_values)]
+
+# Find Empty Sentence Values
+df_de = df_de[df_de["title"].notnull() & (df_de["title"].str.strip() != '')]
+
+# Remove unnecessary columns
+df_de = df_de.drop("article_id", axis=1)
+df_de = df_de.drop("article_stance", axis=1)
+df_de = df_de.drop("paragraphs", axis=1)
+df_de = df_de.drop("source", axis=1)
+df_de = df_de.drop("snippet", axis=1)
+
+# Rename Columns
+df_de = df_de.rename(columns={'title': 'sentence_de'})
+df_de = df_de.rename(columns={'article_emotion': 'emotion_de'})
+
+# Merge Englsih Emotions onto German
+df_de = pd.merge(df_de, df_emotions, on='emotion_de', how='left')
+
+# Add English Sentence Column
+df_de["sentence_en"] = ""
+
+# Randomly select 1500 rows
+df_de = df_de.sample(n=1500, random_state=2023)
+
+df_de.to_csv('./data/pd_de.csv', index=False)
 
 
-# We Need to "split" the "artice_emotion" column since the ETH team listed
-# multiple emotions in one column
-# In order to "explode" the column to it's distinct rows
-df_german_exploded = df_german.select('*', explode('article_emotion').alias('emotion_de'))
-
-# Rename Column
-df_german_exploded = df_german_exploded.withColumnRenamed("title", "sentence_de")
-
-# Remove unnecessary column
-df_german_exploded = df_german_exploded.drop("article_id")
-df_german_exploded = df_german_exploded.drop("article_stance")
-df_german_exploded = df_german_exploded.drop("paragraphs")
-df_german_exploded = df_german_exploded.drop("source")
-df_german_exploded = df_german_exploded.drop("article_emotion")
-df_german_exploded = df_german_exploded.drop("snippet")
-
-# Make sure the column order to the same for both german and english csv files
-df_german_exploded = df_german_exploded.select('sentence_de', 'emotion_de')
-
-print(f'Count (filtered): {df_german_exploded.count()}')
-
-# Group By for Details & Count
-df_german_grouped = df_german_exploded.groupBy('emotion_de').count()
-
-# Show Groupings and Respetive Counts
-print('\nGrouped & Count by "emotion"')
-df_german_grouped.show(truncate=0)
+# Iterate over the rows with tqdm to show the progress
+for index, row in tqdm(df_de.iterrows(), total=df_de.shape[0]):
+    # Call Translation
+    sentence = translate(row["sentence_de"], 'en')
+    # Save Sentence on Column
+    df_de.at[index, 'sentence_en'] = sentence
 
 
-# Save Dataframe to CSV
-directory_path = 'data/spark_data_parts'
-df_german_exploded.coalesce(1).write.csv(directory_path, header=True, mode="overwrite")
-
-file_pattern = 'part-00000*.csv'
-file_path = glob.glob(directory_path + '/' + file_pattern)[0]
-
-shutil.move(file_path, './data/data_de.csv')
-
-Count (raw): 1970
-German Source Columns: ['article_emotion', 'article_id', 'article_stance', 'paragraphs', 'snippet', 'source', 'title']
-
-Count (filtered): 2568
-
-Grouped & Count by "emotion"
-+------------+-----+
-|emotion_de  |count|
-+------------+-----+
-|Vertrauen   |316  |
-|Freude      |140  |
-|Ärger       |226  |
-|Überraschung|369  |
-|Traurigkeit |184  |
-|Antizipation|774  |
-|Unklar      |314  |
-|Angst       |154  |
-|Ekel        |29   |
-|Keine       |62   |
-+------------+-----+
-\end{minted}
-\clearpage
-
-
-\subsection{Details on Extending \& Translation}
-\label{appendix:dataset_translation}
-Details on translation and extending the datasets.
-\begin{minted}[fontsize=\small]{python}
-# **************************************
-# *** English <-> German Emotion Key ***
-# **************************************
-
-
-from pyspark.sql.functions import col, udf, split, explode, lit
-from pyspark.sql.types import IntegerType, StringType, StructType, StructField, StringType
-
-# Emotion Dictionary English <-> German
-# This key/value setup was previsoulsy created for linking purposes
-emotion_key = {
-    "boredom"    : "---",
-    "love"       : "Vertrauen",
-    "relief"     : "---",
-    "fun"        : "---",
-    "hate"       : "Ekel",
-    "neutral"    : "Unklar",
-    "anger"      : "Ärger",
-    "happiness"  : "Freude",
-    "surprise"   : "Überraschung", 
-    "sadness"    : "Traurigkeit", 
-    "worry"      : "Angst",
-    "enthusiasm" : "Antizipation", 
-    "empty "     : "---",
-    "---"        : "Keine",
-}
-
-# Create the schema for the DataFrame
-schema = StructType([
-    StructField("emotion_en", StringType(), nullable=False),
-    StructField("emotion_de", StringType(), nullable=False)
-])
-
-# Convert the dictionary to a list of tuples
-data = [(key, value) for key, value in emotion_key.items()]
-
-# Create the PySaprk DataFrame
-df_emotion_key = sc.createDataFrame(data, schema)
-
-df_emotion_key.show()
-
-# Extend the English and German onto the datasets
-df_german_exploded = df_german_exploded.join(df_emotion_key, on="emotion_de", how="left")
-df_english_filtered = df_english_filtered.join(df_emotion_key, on="emotion_en", how="left")
-
-# New sentence column
-df_german_exploded = df_german_exploded.withColumn("sentence_en", lit(None))
-df_english_filtered = df_english_filtered.withColumn("sentence_de", lit(None))
-
-df_german_exploded.show()
-df_english_filtered.show()
-
-
-# Using Deep Translator to proxy to Google Translate
-from deep_translator import GoogleTranslator
-
-
-# Define Tranlation Functions
-def translate_en_to_de(row):
-    translated = GoogleTranslator(source='en', target='de').translate(row["sentence_en"])
-    row["sentence_de"] = translated
-
-def translate_de_to_en(row):
-    translated = GoogleTranslator(source='de', target='en').translate(row["sentence_en"])
-    row["sentence_en"] = translated
-    
-
-df_german_exploded.foreach(translate_de_to_en)  
-
-+----------+------------+
-|emotion_en|  emotion_de|
-+----------+------------+
-|   boredom|         ---|
-|      love|   Vertrauen|
-|    relief|         ---|
-|       fun|         ---|
-|      hate|        Ekel|
-|   neutral|      Unklar|
-|     anger|       Ärger|
-| happiness|      Freude|
-|  surprise|Überraschung|
-|   sadness| Traurigkeit|
-|     worry|       Angst|
-|enthusiasm|Antizipation|
-|    empty |         ---|
-|       ---|       Keine|
-+----------+------------+
-
-+------------+--------------------+----------+----------+-----------+----------+
-|  emotion_de|         sentence_de|emotion_en|emotion_en|sentence_en|emotion_en|
-+------------+--------------------+----------+----------+-----------+----------+
-|   Vertrauen|Adoptiert zu sein...|      love|      love|       null|      love|
-|      Freude|Österreichs Verfa...| happiness| happiness|       null| happiness|
-|      Freude|Visana gewinnt er...| happiness| happiness|       null| happiness|
+df_de.to_csv('./data/pd_de_translated.csv', index=False)
 \end{minted}
 \clearpage
