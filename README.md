@@ -19,3 +19,24 @@ Using Python libs to translate. I used the `deep-translator` by installing using
 I used the following link: `https://medium.com/analytics-vidhya/how-to-translate-text-with-python-9d203139dcf5`
 
 I installed `pip3 install googletrans==4.0.0-rc1` for PySpark translation.
+
+## Dataframe Work
+
+I installed the following: `pip install -q transformers` and `pip install torch` and `pip install matplotlib`
+
+
+
+ "boredom",
+    "love",
+    "relief",
+    "fun",
+    "hate",
+    "neutral",
+    "anger",
+    "happiness",
+    "surprise",
+    "sadness",
+    "worry",
+    "enthusiasm",
+    "empty",
+    "---",
