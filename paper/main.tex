@@ -4,6 +4,7 @@
 \usepackage{microtype}
 \usepackage{fullpage}
 \usepackage{multirow}
+\usepackage{tocloft}
 
 \usepackage{minted}
 \setminted[]{linenos, numbersep=5pt, frame=lines}
@@ -14,6 +15,7 @@
 
 \usepackage{array}
 \newcolumntype{L}{>{\centering\arraybackslash}m{1.2in}}
+\newcolumntype{M}{>{\centering\arraybackslash}m{0.85in}}
 
 \usepackage[affil-it]{authblk}
 \usepackage{amsfonts, amssymb, amsmath}
@@ -38,15 +40,16 @@
 	\thanks{Electronic address: \texttt{jaishree.ranganathan@mtsu.edu}}}
 \affil{Middle Tennessee State University}
 
-
 \begin{document}
 
 \maketitle
 
 \begin{abstract}
-This Qualifying Exam\footnote{PhD students of MTSU Computational and Data  Science program are required to complete a Qualifying Exam in their first year in the program.} research paper investigates the potential of improving Emotion Detection (ED) through real-time translation of text to multiple Machine Learning (ML) models trained in different languages (English and German). The research tries to address the challenges posed by the lack of comprehensive labeled datasets and language fragmentation in ED analysis. 
+This Qualifying Exam\footnote{PhD students of MTSU Computational and Data Science program are required to complete a Qualifying Exam in their first year in the program.} research paper investigates the potential of improving Emotion Detection (ED) through real-time translation of text to multiple Machine Learning (ML) models trained in different languages specifically  English and German. The research aims to address the challenges posed by the lack of comprehensive labeled datasets and language fragmentation in ED analysis research and projects. 
 
-By extending an original language dataset with a translated dataset, in the case of this paper English and German. And utilizing parallel processing with PySpark, this research project aims to achieve higher prediction rates in ED. The results presented both orally to the MTSU's Computational Data \& Science Committee and within this paper demonstrate the effectiveness of such an approach and how the real-time translation technique can enhance emotion detection capabilities.
+By extending an original English language dataset with a translated dataset from German to English the training data (extended dataset) the hope is that better prediction rates can be achieved in ED analysis applications. Furthermore, translating English to German to extend the German dataset and training another ML model in parallel using PySpark and accessing both models in real-time by a simple RESTful API may improve the prediction rates by dual processing a sentence at the same time.
+
+In order to present the results presented both orally to the MTSU's Computational Data \& Science Committee and within this paper labeled datasets both in English and German were collected, translated, and two ML models built that can be accessed via an API to get a prediction on an input (POST or GET) sentence both in German or English.
 \end{abstract}
 \clearpage
 
@@ -99,7 +102,9 @@ By accurately identifying and understanding emotions from text data, ML applicat
 
 Due to the before mentioned wide scope of uses for ED this field of research and the work to advance it provides significance and importance in enabling machines to comprehend and respond appropriately to human interactions. This in turn contributes to the advancement of artificial intelligence, natural language processing and in many cases the utilization of text-to-speech applications most all of us in today's society use and rely on \cite{ai-framework-detection-emotions}.
 
-\subsection{ED challenges: Lack of Comprehensive Labeled Datasets and Language Fragmentation}
+Lastly, in Chen et al.\cite{research-emotion-recognition-for-online-learning} paper based on emotion detection for online learning, it states that with emotion recognition research, we need to focus on accuracy and real-time performance in order to apply emotional recognition based on physiological signals to solve practical problems; they key part of their claim is that in order for ED to be practical real-time methods needs to be used.
+
+\subsection{ED challenges: Lack of Labeled Datasets and Language Fragmentation}
 ED is an immensely growing field, however unlike Sentiment Analysis (SA) the availability of large datasets for training purposes of ML models is much smaller \cite{ACLU-ED-Data, ai-framework-detection-emotions}. The primary reason of the lack of data stems from the emotion detection data requiring primarily supervised learning dataset, which require time and effort to procure, and mostly created and labeled by humans. To compound on the issue of the lack of data; the many datasets that are available are in multiple languages. A significant amount of time took place to find the German labeled 
 
 \subsection{Motivation for the research project focusing on extending ED datasets through translation and evaluating the impact on prediction rates}
@@ -120,14 +125,14 @@ The research project aims at answering the following research questions:
 
 \clearpage
 \section{Literature Review}
-To ensure comprehensive coverage of the latest developments and research in ED for this research paper, consideration and review was only given to incorporating those research papers and online news articles that were published after the year 2018, thereby providing an up-to-date perspective on the subject matter.
+To ensure comprehensive coverage of the latest developments and research in emotion detection and analysis for this research paper, consideration and review was only given to incorporating research papers and online news articles that were published after the year 2015, thereby providing an up-to-date perspective on the subject matter. By implementing the 2015 boundary, our methodology aims to provide a more up-to-date outlook on the subject matter at hand and what areas the ED field in moving in in respect to ML applications and processes.
 
 \subsection{Emotion Detection Importance and Diverse Populations}
 Emotion Detection (ED) holds significant importance in various domains, including psychology, social sciences, and human-computer interaction. It enables the analysis of human emotions at scale, providing valuable insights into individual and collective emotional states. In Chowanda et. al. paper\cite{CHOWANDA-2021821} they believe that "Emotions hold a paramount role in the conversation, as it expresses context to the conversation."
 
 Furthermore, emotions can differ across age groups, genders, cultures, and languages. Including data from diverse populations helps in developing inclusive and culturally sensitive ED models. It ensures that the models are not biased towards specific groups and can accurately detect emotions in a wide range of individuals.
 
-\subsection{Lack of Labeled Datasets and the Fragmentation caused by Different Languages}
+\subsection{Lack of Labeled Datasets and Fragmentation caused by Different Languages}
 
 The lack of diverse and large-scale data hinders the development and training of accurate ED models, limiting their effectiveness and general ability across different contexts and populations.
 
@@ -257,9 +262,20 @@ Each translated file now contains four (4) columns that are labeled in Tables \r
 \label{table:pd_en_translated}
 \end{table}
 
-\subsection{Training Multiple ML models using the Extended Datasets with PySpark}
+\subsection{Training Multiple ML models with PySpark}
 
- Using the datasets from Tables \ref{table:pd_de_translated}, \ref{table:pd_en_translated}, and \ref{table:ml_models} that list an approximate $\sim$1,275 and $\sim$2,775 features for training. The algorithms tested in this research project ranged from the traditional machine learning to deep learning techniques, they are Na\"ive Bayes, Generalised Linear Model (GLM), and Random Forest Classifier models. Each of these algorithms used and their results are listed in the Results and Analysis Section \ref{sec:results-and-analysis} below. In Chowanda et al. paper\cite{CHOWANDA-2021821} on Text-based Emotion Techniques multiple algorithms were proposed, this research focused on just three out of their six since the others had lower prediction rates based on Chowanda et al. paper\cite{CHOWANDA-2021821} paper.
+ Using the datasets from Tables \ref{table:pd_de_translated}, \ref{table:pd_en_translated}, and \ref{table:ml_models} that list an approximate $\sim$1,275 and $\sim$2,775 features for training. The algorithms tested in this research project ranged from the traditional machine learning to deep learning techniques, they are:
+ \begin{itemize}
+
+\item \textbf{Na\"ive Bayes:} Per Pujan's paper\cite{naive-bayes-model} on the Na\"ive Bayes model, it classifies and/or assigns the most likely class to a given example based on its feature vector, simplifying the task greatly by assuming that the features are independent given a class. 
+
+\item \textbf{Generalised Linear Model (GLM):} Per Mueller's paper on GLM\cite{glm-model} the Generalized linear models extend the concept of the well understood linear regression model.
+
+\item \textbf{Random Forest Classifier:} Per Schonlau's paper\cite{random-forest-model} on the Random Forest Classifier, they state that random decision forests easily adapt to non-linearity found in the data and therefore tend to predict better than linear regression. More specifically, ensemble learning algorithms like random forests are well suited for medium to large datasets.
+
+\end{itemize}
+ 
+Each of these algorithms used and their results are listed in the Results and Analysis Section \ref{sec:results-and-analysis} below. In Chowanda et al. paper\cite{CHOWANDA-2021821} on Text-based Emotion Techniques multiple algorithms were proposed, this research focused on just three out of their six since the others had lower prediction rates based on Chowanda et al. paper\cite{CHOWANDA-2021821} paper.
 
  \begin{table}[h!]
 \centering
@@ -299,22 +315,22 @@ Each translated file now contains four (4) columns that are labeled in Tables \r
 \label{table:ml_models}
 \end{table}
 
-In order for such to be processed in real-time, the Jupyter Notebook will start a PySpark session that is accessed via the local server running that accepts RESTful API calls with details of the server in Appendix \ref{appendix:code-api-server}.
+In order for each of the three ML models to be processed at the same time we crated a Jupyter Notebook that starts an Apache PySpark\footnote{PySpark: https://spark.apache.org/docs/latest/api/python/index.html} session that is accessed via the local server running that accepts RESTful API calls with details of the server in Appendix \ref{appendix:code-api-server}.
 
 \subsection{Evaluation Metrics and methodologies for measuring the performance of the ML models}
-The evaluation of ML models trained on the English, German and their respective extension datasets is a critical step in assessing their performance and reliability. We chose to use the MulticlassClassificationEvaluator\footnote{URL: https://spark.apache.org/docs/latest/api/python/reference/api/pyspark.ml.evaluation.MulticlassClassificationEvaluator.html} because is a well known tool in the field of natural language processing (NLP) research, specifically in multi class classification tasks such as Emotion Detection (ED). Generally this evaluator is used to evaluate the performance of machine learning (ML) models, using transformer-based architectures like BERT, RoBERTa, or DistilBERT\cite{Sanh2019-DistilBERT-AD}, with DistilBERT\cite{Sanh2019-DistilBERT-AD} being the one use in this research.
+\label{sec:evaluation-metrics-and-methodologies}
+The evaluation of ML models trained on the English, German and their respective extension datasets is a critical step in assessing their performance and reliability. We chose to use the MulticlassClassificationEvaluator\footnote{URL: https://spark.apache.org/docs/latest/api/python/reference/api/pyspark.ml.evaluation.MulticlassClassificationEvaluator.html} because is a well known tool in the field of natural language processing (NLP) research, specifically in multi class classification tasks such as emotion detection that has multiple labels associated with it; in our case eight (8) see Table \ref{table:dataset_labels} on Page \pageref{table:dataset_labels}. Generally this evaluator is used to evaluate the performance of machine learning (ML) models, using transformer-based architectures like BERT, RoBERTa, or DistilBERT\cite{Sanh2019-DistilBERT-AD}, with DistilBERT\cite{Sanh2019-DistilBERT-AD} being the one we used in this research project.
 
-The MulticlassClassificationEvaluator provides the essential evaluation metrics, including accuracy, precision, recall, and F1 score, for ED classifications. These metrics provide valuable insights into a model's ability to correctly classify emotions across multiple classes and language identification. Our research project is no different and the following that the assumptions are used to determine the effectiveness of the methodology of extending our datasets:
+The MulticlassClassificationEvaluator provides the essential evaluation metrics, including accuracy, precision, recall, and F1 score, for ED classifications. These metrics provide valuable insights into a model's ability to correctly classify emotions across multiple classes and languages. Our research project is no different and the following measurements were used for our analysis:
 \begin{itemize}
 
-\item \textbf{Accuracy:} Accuracy measures the overall correctness of the emotion predictions made by the model. It is calculated as the ratio of correctly classified instances to the total number of instances in the dataset. However, accuracy may not provide a complete picture, especially if the dataset is imbalanced.
+\item \textbf{Accuracy:} Accuracy measures the overall correctness of the emotion predictions made by the model. It is calculated as the ratio of correctly classified instances to the total number of instances in the dataset.
 
-\item \textbf{Precision, Recall, and F1 Score:} Precision represents the proportion of correctly predicted emotions among all instances predicted as a specific emotion. Recall measures the proportion of correctly predicted emotions among all instances that truly belong to a specific emotion. F1 Score ($F_{1}=\frac{\text{Precision} \times \text{Recall}}{\text{Precision} + \text{Recall}}$) combines precision and recall into a single metric, providing a balanced evaluation.
+\item \textbf{F1 Score:} Precision represents the proportion of correctly predicted emotions among all instances predicted as a specific emotion with respect to the labels. Recall measures the proportion of correctly predicted emotions among all instances that truly belong to a specific emotion. With these two the F1 Score ($F_{1}=\frac{\text{Precision} \times \text{Recall}}{\text{Precision} + \text{Recall}}$) combines precision and recall into a single metric, providing a balanced evaluation.
 
-\item \textbf{Error Analysis:} Performing error analysis on the model's predictions helps identify specific patterns or instances where the model might struggle or make frequent mistakes. This analysis can guide improvements and provide insights for future model development.
 \end{itemize}
 
-When evaluating such models, several factors come into play. First and foremost, the choice of appropriate evaluation metrics is crucial, depending on the specific task at hand, such as text classification, sentiment analysis, or named entity recognition. Metrics like accuracy, precision, recall, F1 score, or area under the receiver operating characteristic curve (AUC-ROC) are commonly used to measure the models' performance.
+While evaluating the models we focused on the Accuracy and the F1 Score to illustrate the prediction results of the original versus extended datasets.
 
 \subsection{Written \& Oral Presentation of Research Finding}
 In conclusion of the project a research paper and oral presentation is required to pass MTSU Computation Science PhD Qualifying Exam. The listing the datasets used, code for the application, and details of the research project process in this research paper is openly available and hosted on a GitHub repository, allowing for easy access, reproducible, and collaborative engagement with the research findings. The repository is open and available under: \texttt{https://github.com/richardhoehn/mtsu.coms.qualifying-exam}\cite{Hoehn_Improving_Emotion_Detection_2023}
@@ -322,23 +338,110 @@ In conclusion of the project a research paper and oral presentation is required 
 \clearpage
 \section{Results and Analysis}
 \label{sec:results-and-analysis}
-The following section lists the prediction rates of training and testing of the original and extended datasets both in English and German. Overall results seem to indicate that there was no and even negative results based on adding the extended data for Emotion Detection. In the below sub sections details on the results are listed in prose, tables, and formauls.
+The following section lists the prediction rates of training and testing of the original and extended datasets both in English and German. Overall results seem to indicate that there was no measurable benefit and even negative results based on adding the extended data for Emotion Detection. In the below sub sections details on the results are listed in prose, tables, and formulas.
 
 \subsection{Prediction Results of Original \& Extended Datasets}
+Overall the prediction results from the trained models is disappointing. Using the Random Forrest Classifier described in Section \ref{sec:evaluation-metrics-and-methodologies} provided the best prediction results based. Oddly, the prediction results with the extended data where lower than using the original (non-extended) data for training.
 
-\ldots
+\subsubsection{English Dataset Results}
+The Table \ref{table:en_testing_results} lists the results of all three ML models, their accuracy and F1 Score based on the English original and extended datasets. The improvements from the original and extended datasets are listed in the last column. In all cases the improvement to using the extended datasets was negative.
 
-\subsection{Comparison of Prediction Rates of Original and Extended Language Datasets}
-\ldots
+\begin{table}[h!]
+\centering
+\begin{tabular}{ | L | M | M | M | M | M | }
+    \hline
+    \multicolumn{6}{|c|}{Results of English Dataset} \\
+    \hline
+    &
+    \multicolumn{2}{c|}{Original Dataset} &
+    \multicolumn{3}{c|}{Extended Dataset} \\
+    & Accuracy & F1 Score & Accuracy & F1 Score & Improvement \\
+    \hline
+    Random Forrest & 
+    29.72\% &
+    20.32\% & 
+    28.77\%  &
+    19.47\% &
+    -3.20\% \\
+    \hline
+    Na\"ive Bayes & 
+    5.66\% &
+    6.92\% & 
+    3.77\%  &
+    4.11\% &
+    -33.39\% \\
+    \hline
+    GLM & 
+    25.94\% &
+    25.92\% & 
+    22.64\%  &
+    23.25\% &
+    -10.37\% \\
+    \hline
+\end{tabular}
+\caption{Model Testing Results on English Dataset}
+\label{table:en_testing_results}
+\end{table}
 
-\subsection{Analysis of the impact of Extending Datasets by Translation and Performance of the Combination of ML models}
-\ldots
+\subsubsection{German Dataset Results}
+The Table \ref{table:de_testing_results} lists the results of all three ML models, their accuracy and F1 Score based on the German original and translated from English to German extended datasets. The improvements from the original and extended datasets are listed in the last column. Interestingly the Randon Forrest Classifier was the only negative improvement whereas the GLM and Naive Bayes models had improvements. However it should be noted that the prediction rates are so low in the GLM and Naive Bayes that they should not really be considered improvements.
 
-\subsection{Discussion of the findings and their implications for improving Emotion Detection}
-\ldots
+\begin{table}[h!]
+\centering
+\begin{tabular}{ | L | M | M | M | M | M | }
+    \hline
+    \multicolumn{6}{|c|}{Results of German Dataset} \\
+    \hline
+    &
+    \multicolumn{2}{c|}{Original Dataset} &
+    \multicolumn{3}{c|}{Extended Dataset} \\
+    & Accuracy & F1 Score & Accuracy & F1 Score & Improvement \\
+    \hline
+    Random Forrest & 
+    34.29\% &
+    17.51\% & 
+    18.57\%  &
+    13.44\% &
+    -45.84\% \\
+    \hline
+    Na\"ive Bayes & 
+    4.29\% &
+    4.31\% & 
+    6.67\%  &
+    4.21\% &
+    +55.48\% \\
+    \hline
+    GLM & 
+    11.90\% &
+    12.57\% & 
+    14.76\%  &
+    15.88\% &
+    +20.03\% \\
+    \hline
+\end{tabular}
+\caption{Model Testing Results on German Dataset}
+\label{table:de_testing_results}
+\end{table}
+
+The improvements on the accuracy are based on Equation \eqref{eq:improvement} listed below. It is a simple and straightforward way of comparing the Accuracy from the original trained dataset to the extended trained dataset for purposes of comparing the potential benefits of the translation.
+
+\begin{equation}
+Improvement(\%) = \dfrac{(Accuracy_{Ext} (\%) - Accuracy_{Org} (\%))}{Accuracy_{Org}(\%)}
+\label{eq:improvement}
+\end{equation}
+
+Further
+
+\subsection{Analysis of the impact of Extending Datasets by Translation}
+While extending datasets for machine learning training can often improve\cite{Sarker2021} model performance, it's important to recognize that this approach has its limitations, especially in ML models that can reach a limit on training data. In our case, relying on translation services for dataset expansion might not consistently yield better results when extending the data from translated text. These services, in our case Google Translate\footnote{Google Cloud Translate URL: https://cloud.google.com/translate} can introduce errors or inaccuracies in translations especially in the context of emotions of a particular text, leading to noisy or incorrect training data. Consequently, the models may learn from erroneous information, which did negatively impact our models performance on the ED tasks.
+
+\subsection{Findings and Implications for Improving Emotion Detection}
+
 
 \subsection{Conclusion and Future Work}
-\ldots
+It's crucial to ensure the quality and accuracy of extended data, especially when language translation is involved, to prevent introducing more noise than meaningful information into the training process. Although the research did not garner any significant improvements by translating the German to English as a means on extending the English dataset, it actually made it the prediction results worse.
+
+Future work includes testing and translating different models by using different translation services. Using Google Cloud's translation service was adequate for this research, however there are certainly better translation services that are available but are based on paid subscriptions.
 
 \clearpage
 \section{Demonstration and Application}
@@ -365,6 +468,7 @@ The listing the datasets used, code for the application, and details of the rese
 \addcontentsline{toc}{section}{List of Figures}
 \listoffigures
 \clearpage
+
 
 % Appendix Details
 \appendix
