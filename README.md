@@ -1,5 +1,9 @@
 # MTSU COMS - Qualifying Exam
 
+## Title
+
+Improving Emotion Detection through Translation of Text to ML Models Trained in Different Languages
+
 ## Abstract
 
 This Qualifying Exam research paper investigates the potential of improving Emotion Detection (ED) through translation of extended text data to multiple Machine Learning (ML) models trained in different languages. Our research focused on  English and German (voting articles) datasets to improve prediction accuracy. By this our research aims to address the challenges posed by the lack of comprehensive labeled datasets and language fragmentation in ED research and projects.
