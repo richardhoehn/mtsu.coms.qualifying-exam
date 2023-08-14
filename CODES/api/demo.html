@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>ML Prediction API Demo</title>
+    <link
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link href='http://fonts.googleapis.com/css?family=OpenSans:300,700' rel='stylesheet' type='text/css'>
+    <style>
+      body {
+      font-family: 'OpenSans', sans-serif !important;
+      }
+      .spinner {
+        border: 4px solid rgba(0, 0, 0, 0.1);
+        border-left: 4px solid #3498db;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        animation: spin 1s linear infinite;
+        display: inline-block;
+        margin-left: 5px;
+        vertical-align: middle;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container mt-3 text-center">
+      <img src="images/MTSU_Wordmark.png" class="img-thumbnail mb-3" width="200px" alt="MTSU Logo">
+      <div class="card">
+        <div class="card-body">
+          <h1 class="mb-2">ML Prediction API Demo</h1>
+          <h4 class="mb-4">Qualifying Exam - August, 2023</h4>
+          <div class="row">
+            <div class="col-lg-4">
+              <div class="form-group">
+                <label for="englishInput">English</label>
+                <input class="form-control" type="text" id="englishInput" />
+              </div>
+            </div>
+            <div class="col-lg-4">
+              <div class="form-group">
+                <label for="germanInput">German</label>
+                <input class="form-control" type="text" id="germanInput" />
+              </div>
+            </div>
+            <div class="col-lg-4">
+              <button
+                class="btn btn-block btn-primary h-100"
+                id="predictButton"
+              >
+                <span class="h2">Predict</span>
+              </button>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-lg-4">
+              <div
+                class="alert alert-success h3"
+                role="alert"
+                id="emotionEn"
+                style="display: none"
+              ></div>
+            </div>
+            <div class="col-lg-4">
+              <div
+                class="alert alert-success h3"
+                role="alert"
+                id="emotionDe"
+                style="display: none"
+              ></div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-lg-4">
+              <div
+                class="alert alert-secondary"
+                role="alert"
+                id="sentenceEn"
+                style="display: none"
+              ></div>
+            </div>
+            <div class="col-lg-4">
+              <div
+                class="alert alert-secondary"
+                role="alert"
+                id="sentenceDe"
+                style="display: none"
+              ></div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-lg-12">
+              <span
+                id="spinner"
+                class="spinner-border text-primary"
+                style="display: none"
+              ></span>
+              <h2 class="mt-4">API Response:</h2>
+                <pre id="response" class="alert alert-dark text-left"></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Include Bootstrap JS and any other scripts you need -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+      const predictButton = document.getElementById("predictButton");
+      const englishInput = document.getElementById("englishInput");
+      const germanInput = document.getElementById("germanInput");
+      const responseElement = document.getElementById("response");
+      const spinner = document.getElementById("spinner");
+
+      const emotionEnElement = document.getElementById("emotionEn");
+      const emotionDeElement = document.getElementById("emotionDe");
+
+      const sentenceEnElement = document.getElementById("sentenceEn");
+      const sentenceDeElement = document.getElementById("sentenceDe");
+
+      predictButton.addEventListener("click", async () => {
+        const englishText = englishInput.value;
+        const germanText = germanInput.value;
+
+        const apiUrl = "http://127.0.0.1:8080/predict"; // Replace with your API URL
+
+        try {
+          spinner.style.display = "inline-block"; // Show spinner
+
+          // Clear Previsous Outputs
+          emotionEnElement.textContent = "";
+          emotionEnElement.style.display = "none";
+          emotionDeElement.textContent = "";
+          emotionDeElement.style.display = "none";
+          
+          sentenceEnElement.textContent = "";
+          sentenceEnElement.style.display = "none";
+          sentenceDeElement.textContent = "";
+          sentenceDeElement.style.display = "none";
+
+          responseElement.textContent = "";
+
+
+          const resp = await fetch(
+            `${apiUrl}?sentence_en=${encodeURIComponent(
+              englishText
+            )}&sentence_de=${encodeURIComponent(germanText)}`
+          );
+          const respJson = await resp.json();
+
+          // Set Response Emotions
+          emotionEnElement.textContent = respJson.predictions.en_rfc
+            .toString()
+            .toUpperCase();
+          emotionEnElement.style.display = "block";
+          emotionDeElement.textContent = respJson.predictions.de_nb
+            .toString()
+            .toUpperCase();
+          emotionDeElement.style.display = "block";
+            
+          // Set Response Sentences
+          sentenceEnElement.textContent = respJson.sentence.english;
+          sentenceEnElement.style.display = "block";
+          sentenceDeElement.textContent = respJson.sentence.german;
+          sentenceDeElement.style.display = "block";
+
+          responseElement.textContent = JSON.stringify(respJson, null, 2);
+          responseElement.style.color = "black"; // Reset text color
+        } catch (error) {
+          responseElement.textContent = `Error: ${error.message}`;
+          responseElement.style.color = "red"; // Set text color to red
+        } finally {
+          spinner.style.display = "none"; // Hide spinner
+        }
+      });
+    </script>
+  </body>
+</html>
