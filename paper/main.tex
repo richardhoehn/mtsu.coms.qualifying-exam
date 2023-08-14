@@ -6,16 +6,21 @@
 \usepackage{multirow}
 \usepackage{tocloft}
 
-\usepackage{minted}
+\usepackage[newfloat]{minted}
+\usepackage{caption}
 \setminted[]{linenos, numbersep=5pt, frame=lines}
 
 \usepackage{parskip}
 \setlength{\parindent}{0em}
 \setlength{\parskip}{1em}
 
+\newenvironment{code}{\captionsetup{type=listing}}{}
+\SetupFloatingEnvironment{listing}{name=Source Code}
+
 \usepackage{array}
 \newcolumntype{L}{>{\centering\arraybackslash}m{1.2in}}
 \newcolumntype{M}{>{\centering\arraybackslash}m{0.85in}}
+\newcolumntype{N}{>{\centering\arraybackslash}m{0.5in}}
 \usepackage{tablefootnote}
 
 \usepackage[affil-it]{authblk}
@@ -31,7 +36,7 @@
 \addbibresource{sources.bib}
 % Use the followign Command to validate *.bib file: biber --tool --validate-datamodel qualifying_exam_paper.bib
 
-\title{Improving Emotion Detection through Real-Time Translation of Text to ML Models Trained in Different Languages}
+\title{Improving Emotion Detection through Translation of Text to ML Models Trained in Different Languages}
 
 \author{Richard Hoehn%
 	\thanks{Electronic address: \texttt{rhoehn@mtmail.mtsu.edu}; corresponding author}}
@@ -46,13 +51,13 @@
 \maketitle
 
 \begin{abstract}
-This Qualifying Exam\footnote{PhD students of MTSU Computational and Data Science program are required to complete a Qualifying Exam in their first year in the program.} research paper investigates the potential of improving Emotion Detection (ED) through real-time translation of text to multiple Machine Learning (ML) models trained in different languages. Our research focused on  English and German datasets. This research aims to address the challenges posed by the lack of comprehensive labeled datasets and language fragmentation in ED analysis research and projects, essence the lack of data to better train ML models is trying to be addressed. 
+This Qualifying Exam\footnote{Comp. and Data Science PhD students are required to complete a Qualifying Exam in their first year} research paper investigates the potential of improving Emotion Detection (ED) through translation of extended text data to multiple Machine Learning (ML) models trained in different languages. Our research focused on  English (X\footnote{X is formerly known as Twitter} threads) and German (voting articles) datasets to improve prediction accuracy. By this our research aims to address the challenges posed by the lack of comprehensive labeled datasets and language fragmentation in ED research and projects.
 
-By extending an original English language dataset with a translated dataset from German to English the training data (extended dataset) become larger and the hope is that better prediction rates can be achieved in ED analysis applications due to ML training having more data for learning. Furthermore, translating English to German to extend the German dataset and training another ML model using PySpark and accessing both models in real-time by a simple RESTful API may improve the prediction rates by dual processing a sentence at the same time.
+By extending an original English language dataset with a translated dataset from German to English the training data (extended dataset) becomes larger and the hope is that better prediction rates can be achieved in ED analysis applications due to ML training having more data for learning. Furthermore, translating English to German to extend the German dataset and training another ML model using PySpark and accessing both models in real-time by a simple RESTful API may improve the prediction rates even more by dual processing a sentence at the same time.
 
-In order to present the results presented both orally to the MTSU's Computational Data \& Science Committee and within this paper labeled datasets both in English and German were collected, translated, and two ML models built that can be accessed via an API to get a prediction on an input (POST or GET) sentence both in German or English.
+In order to present the results presented both orally to the MTSU's Computational Data \& Science Committee and within this paper labeled datasets both in English and German were collected, parsed, cleaned, translated, and two ML models built that can be accessed via an API to get a prediction by inputting sentences both in German or English via GET method using a simple query-string.
 
-Sadly the research and results point to the realization that extending the datasets by translation did not improve prediction rates of English or German. Some minor gains can be achieve by accessing both English and German models at the same time via the RESTful API but unfortunately the benefits may not really support the efforts.
+Sadly the research and results point to the realization that extending the datasets by translation did not improve prediction rates of English or German. Some minor gains can be achieved by accessing both English and German models at the same time via the RESTful API but unfortunately the benefits may not really support the efforts. In conclusion it that much more data needs to be collected in order to be able to definitely answer this research question.
 \end{abstract}
 \clearpage
 
@@ -61,15 +66,15 @@ Sadly the research and results point to the realization that extending the datas
 \clearpage
 \section{Introduction}
 
-Emotion detection has gained significant interest in recent years as a means to understand human behavior and improve communication effectiveness. By analyzing text, speech or facial expressions, these detection processes try to accurately identify and classify emotions expressed by individuals or groups, often times in real-time.
+Emotion detection (ED) has gained significant interest and investment\cite{Sarker2021} in recent years as a means to understand human behavior and improve communication effectiveness. By analyzing text, speech or facial expressions, these detection processes try to accurately identify and classify emotions expressed by individuals or groups, often in real-time.
 
-By employing a variety of ED processes, including natural language processing (NLP) and machine learning (ML), applications with the right amount of data can detect emotions with high precision. These ED systems find applications in diverse fields, such as sentiment analysis, customer feedback analysis, voting and news stances, and mental health monitoring, which all aim at contributing to a deeper understanding of human emotions and their impact on various aspects of life.
+By employing a variety of ED processes, including natural language processing (NLP) and machine learning (ML), applications with the right amount of data can detect emotions with high precision\cite{research-emotion-recognition-for-online-learning}. These ED systems find applications in diverse fields, such as sentiment analysis, customer feedback analysis, voting and news stance prediction, and mental health monitoring, which all aim at contributing to a deeper understanding of human emotions and their impact on various aspects of life.
 
 \subsection{Human Emotion as a Theoretical Framework}
+\label{sec:human-emotion-as-a-theoretical-framework}
+The concept and number of emotions can vary depending on the theoretical framework or model being considered. One well-known model is the Plutchik's Wheel of Emotions seen in Figure \ref{fig:plutchik-wheel}, which proposes eight (8) primary emotions and their contrasting pairs. In this research paper we will be focusing on the basic eight (8) emotions and not on their sub-emotions or contrasting pairs. This allows the ML models being trained and built to be a multi-class classification model with eight labeled options.
 
-The concept and number of emotions can vary depending on the theoretical framework or model being considered. One well-known model is the Plutchik's Wheel of Emotions Figure \ref{fig:plutchik-wheel}, which proposes eight (8) primary emotions and their contrasting pairs. In this research paper we will be focusing on the basic eight emotions and not on their sub-emotions or contrasting pairs. This allows the ML models being trained and built to be a multi-classification model with eight label options.
-
-Listed below are the eight primary emotions according to the Plutchik's Wheel of Emotions \cite{Tromp} that we will be focusing on both in English and German, a detailed reference of emotions used in this research can be found in Table \ref{table:dataset_labels} on page~\pageref{table:dataset_labels}.
+The following are the eight primary emotions according to the Plutchik's Wheel of Emotions \cite{Tromp} that we will be focusing on both in our English and German datasets. A detailed reference of emotions used in this research can be found in Table \ref{table:dataset_labels} on page~\pageref{table:dataset_labels}.
 
 \begin{itemize}
 \item Happiness: A feeling of Joy (Fun), contentment, or delight.
@@ -89,46 +94,46 @@ Listed below are the eight primary emotions according to the Plutchik's Wheel of
     \label{fig:plutchik-wheel}
 \end{figure}
 
-It's important to note that emotions are complex and multifaceted, and different emotion models or frameworks may propose alternative categorizations or variations in the number of primary emotions. However for the scope of this research project the most common eight (8) emotions are used as described above. This allows the ML models being trained and built to be a multi-classification model with eight label options.
+It's important to note that emotions are complex and multifaceted, and different emotion models and/or frameworks may propose alternative categorizations or variations in the number of primary emotions. However for the scope of this research project the most common eight (8) emotions are used as described above. This allows the ML models being trained and built to be a multi-class classification model with eight labeled classes.
 
-By aligning the emotional labels across the English \cite{english-dataset-twitter} and German \cite{german-dataset-cheese} datasets that are being used in this research all eight listed above were used. Details on the linkage of the two datasets and their counts are described in Section \ref{sec:data-procurement-process} with an emphasis on Table \ref{table:dataset_labels}'s cross reference on page~\pageref{table:dataset_labels} of German and English languages.
+By aligning the emotional labels across the English \cite{english-dataset-twitter} and German \cite{german-dataset-cheese} datasets that are being used in this research all eight listed above were linked to each other. Details on the linkage of the two datasets and their counts from data are described in Section \ref{sec:data-procurement-process} with an emphasis on Table \ref{table:dataset_labels}'s cross reference on page~\pageref{table:dataset_labels} of German and English language data.
 
 \subsection{Significance of Emotion Detection in Machine Learning}
-Emotion Detection (ED) analysis in Machine Learning (ML) models has gained significant attention due to its potential applications in various fields, including customer sentiment analysis, stance detection in regard to a specific targets such as news and voting\cite{mascarell-etal-2021-stance}, mental health monitoring\cite{Colonnello}, and human-computer interactions (chatbots\cite{chatbot-cognitive-awareness}) to just name a few.
+Emotion Detection (ED) analysis in Machine Learning (ML) models has gained significant attention due to its potential applications in various fields, including customer sentiment analysis, stance detection in regard to a specific targets such as news and voting\cite{mascarell-etal-2021-stance}, mental health monitoring\cite{Colonnello}, and human-computer interactions such as chat-bots\cite{chatbot-cognitive-awareness} to just name a few.
 
-By accurately identifying and understanding emotions from text data, ML applications can assist in improving user experiences, decision-making processes, and overall human-machine interactions in a positive manner\cite{Colonnello, mascarell-etal-2021-stance}.
+By accurately identifying and understanding emotions from text data, ML applications can assist in improving user experiences, decision-making processes, and overall human-machine interactions in a positive manner\cite{Colonnello, mascarell-etal-2021-stance}, with most of these interactions being processed in real-time.
 
-As an example, the primary goals of chat-bots are entertainment, social contact, and novelty interaction, with a strong emphasis on productivity, scale-ability and cost reductions. In chat-bots, there has been a immense requirement to simulate human-like characteristics and behavior during human-machine interactions\cite{emotion-detection-literature-review}. Per Kusal et al. \cite{chatbot-cognitive-awareness} these chat-bots also improve customer engagement by offering friendliness, comforters, flexibility, and efficient assistance. Chat-bots should provide customers with more engaging responses, directly addressing their issues or questions. The goal of deploying ED applications is for users perceive chat-bots as companions rather than simple assistants, which in turn helps the overall process of getting to a positive result. Per Adikari et al. the majority of user requests are emotional rather than informative; therefore the need that chat-bots gain the capacity to respond emotionally to customers due to machine learning and sentiment analysis evolution\cite{chatbot-cognitive-awareness} is very important and yields for many applications that employee ED a way to improve interactions with machines.
+As an example, the primary goals of chat-bots are entertainment, social contact, support, and novelty interaction, with a strong emphasis on productivity, scale-ability and cost reductions. In the case of chat-bots, there has been a immense requirement to simulate human-like characteristics and behaviors during human-machine interactions\cite{emotion-detection-literature-review}. Per Kusal et al. \cite{chatbot-cognitive-awareness} these chat-bots also improve customer engagement by offering friendliness, comforters, flexibility, and efficient assistance. As such chat-bots should provide customers with more engaging responses, directly addressing their issues or questions. The goal of deploying ED to these applications is for users perceive chat-bots as companions rather than simple assistants, which in turn helps the overall process of getting to a positive result. Per Adikari et al. the majority of user requests are emotional rather than informative; therefore the need for chat-bots to gain the capacity to respond emotionally to customers via machine learning and sentiment analysis evolution\cite{chatbot-cognitive-awareness} is very important and yields for many applications that use ED a way to improve interactions with machines.
 
 \begin{quote}
     I usually know almost exactly how I feel. The problem is, I just can’t tell anyone.
     \flushright -- Meg Cabot
 \end{quote}
 
-Due to the before mentioned wide scope of uses for ED this field of research and the work to advance it provides significance and importance in enabling machines to comprehend and respond appropriately to human interactions. This in turn contributes to the advancement of artificial intelligence, natural language processing (NLP) and in many cases the utilization of text-to-speech applications most all of us in today's society use and rely on \cite{ai-framework-detection-emotions} to go about our daily lives.
+Due to the before mentioned wide scope of uses for ED this field of research and the work to advance it provides significance and importance in enabling machines to comprehend and respond appropriately to human interactions. Our research in turn contributes to the advancement of artificial intelligence, natural language processing (NLP) and in many cases the utilization of text-to-speech applications most all of us in today's society use and rely on \cite{ai-framework-detection-emotions} to go about our daily lives.
 
-Lastly, in Chen et al.\cite{research-emotion-recognition-for-online-learning} paper based on emotion detection for online learning, it states interestingly that with emotion recognition research, we need to focus on accuracy and real-time performance in order to apply ED based on physiological signals to solve practical problems; the key part of their claim is that in order for ED to be practical, real-time methods needs to be used and deployed for maximum results.
+Lastly, in the paper by Chen et al.\cite{research-emotion-recognition-for-online-learning} based on emotion detection for online learning it states, interestingly, that with emotion recognition research, we need to focus on accuracy and real-time performance in order to apply ED based on physiological signals to solve practical problems; the key part of their claim is that in order for ED to be practical, real-time methods need to be used and deployed for maximum results.
 
 \subsection{Challenges: Lack of Labeled Datasets and Language Fragmentation}
-Emotion Detection is an immensely growing field, however unlike Sentiment Analysis (SA) the availability of large datasets for training purposes of ML models is much smaller \cite{ACLU-ED-Data, ai-framework-detection-emotions}. The primary reason of the lack of data stems from the face that emotion detection data requires primarily supervised learning data. In in turn requires time and effort to construct, catalog, and procure,; this all is mostly created and labeled by humans. To compound on the issue of the lack of labeled data; the many datasets that are available are in many cases in multiple languages - not all are in English since emotions that are linked to text are contextual in nature. for this research a a significant amount of time took place to find the German labeled data, which eventually was found online by google searching.
+Emotion Detection is a fast growing field\cite{ACLU-ED-Data, ACLU-THE-DAWN-OF-ROBOT-SURVEILLANCE}, however unlike Sentiment Analysis (SA) the availability of large datasets for training purposes of ML models is much smaller \cite{ACLU-ED-Data, ai-framework-detection-emotions}. The primary reason of the lack of data stems from the face that emotion detection data requires primarily supervised learning data. In in turn requires time and effort to construct, catalog, and procure,; this all is mostly created and labeled by humans. To compound on the issue of the lack of labeled data; the many datasets that are available are in many cases in multiple languages - not all are in English since emotions that are linked to text are contextual in nature. for this research a a significant amount of time took place to find the German labeled data, which eventually was found online by google searching.
 
 \subsection{Motivation for the research project focusing on extending ED datasets through translation and evaluating the impact on prediction rates}
 
-This paper is significant because an entire industry of automated emotion reading (Text, Image, Video, and Sound) technologies is quickly emerging \cite{ACLU-ED-Data, ACLU-THE-DAWN-OF-ROBOT-SURVEILLANCE}. The market for emotion recognition and detection software is forecast to reach at least \$3.8 billion by 2025 \cite{ACLU-ED-Data, ACLU-THE-DAWN-OF-ROBOT-SURVEILLANCE}. And since ED is already being incorporated into products for purposes such as marketing, robotics, driver safety, customer service, news and stance analysis, and a multiple of others, it is fitting to work on research to solve and / or improve issues in regards to prediction rates and lack of teaching / learning data.
+This paper is significant because an entire industry of automated emotion reading (Text, Image, Video, and Sound) technologies is quickly emerging \cite{ACLU-ED-Data, ACLU-THE-DAWN-OF-ROBOT-SURVEILLANCE}. The market for emotion recognition and detection software is forecast to reach at least \$3.8 billion by 2025 \cite{ACLU-ED-Data, ACLU-THE-DAWN-OF-ROBOT-SURVEILLANCE}. And since ED is already being incorporated into products for purposes such as marketing, robotics, driver safety, customer service, news and stance analysis, and a multiple of others, it is fitting to work on research to solve and / or improve issues in regards to prediction rates due to lack of data and language fragmentation.
 
-With the before mentioned issues regarding the quantity (lack of) and fragmentation of the ED datasets this research was motivated by finding a way to combine different language datasets into a single set for training processes to improve the predictability of ED. The aim of the research is that by use of translation that the predictability of ED can be improved by extending an English dataset with translations from German and also process look-ups in real-time language conversion and processing.
+With the before mentioned issues regarding the quantity (lack of) and language fragmentation of the ED datasets this research was motivated by finding a way to combine different language datasets into a single set for training processes to improve the predictability of ED. The aim of the research is that by use of translation that the predictability of ED can be improved by extending an English dataset with translations from German and also process look-ups in real-time language conversion and processing.
 
 \subsection{Objectives \& Scope of the Research}
 
-The research project aims at answering the following research questions:
+The primary objective of this Qualifying Exam research project is to address three (3) research questions, each aimed at improving the accuracy of predictive ED models in the context of English and German language datasets.
 
 \begin{itemize}
-\item Can by translating English data to German and extending an original German dataset increase the predictability of German ED model?
-\item Can by translating German data to English and extending an original English dataset increase the predictability of English ED model?
-\item Can by translating in real-time an input to multiple languages improve the predictability based on the combined output of two models that were trained in English and German to better the prediction results.
+\item The first hypothesis is that by introducing English data translated into German and extending an original German dataset, will the added text lead to an enhancement in its predictive capabilities. (Section \ref{sec:analysis-of-impact-of-extending-datasets})
+\item Similar to the first, can by translating German data to English and extending an original English dataset increase the predictability of English ED model? (Section \ref{sec:analysis-of-impact-of-extending-datasets})
+\item The third research question shifts the focus to real-time translation and its impact on prediction. Can by translating in real-time an input to multiple languages improve the predictability based on the combined output of two models that were trained in English and German to better the prediction results. (Section \ref{sec:impact-using-api-for-real-time-translation})
 \end{itemize}
 
-With these three (3) objectives our approach will be to procure, translate, train, and evaluate benefits of extending datasets by translation to improve emotion detection. 
+In summary, this research project centers around investigating innovative ways to enhance the predictability of Emotion Detection models in both English and German. With these three (3) objectives from above our methodology will be to procure, translate, train, and evaluate benefits of extending datasets by translation to improve emotion detection. 
 
 \clearpage
 \section{Literature Review}
@@ -137,7 +142,7 @@ To ensure comprehensive coverage of the latest developments and research in emot
 We believe by implementing the 2015 boundary, our methodology and results aim to provide a more up-to-date outlook on the subject matter at hand and what areas the emotion detection field is moving in with respect to machine learning research, applications and processes.
 
 \subsection{Emotion Detection Importance and Diverse Populations}
-Emotion Detection (ED) holds significant importance in various domains, including psychology, social sciences, and human-computer interaction. It enables the analysis of human emotions at scale, providing valuable insights into individual and collective emotional states both in real-time but also as a type barometer for measuring sentiments from the past versus the current time. In Chowanda et al. paper\cite{CHOWANDA-2021821} they believe that "Emotions hold a paramount role in the conversation, as it expresses context to the conversation.", this means that emotions are a part of a conversation and with that are needed to ensure valid analysis of a conversation.
+Emotion Detection (ED) holds significant importance\cite{Sarker2021} in various domains, including psychology, social sciences, and human-computer interaction. By use of ML models\cite{CHOWANDA-2021821} the analysis of human emotions at scale, providing valuable insights into individual and collective emotional states both in real-time but also as a type barometer for measuring sentiments from the past versus the current time. In Chowanda et al. paper\cite{CHOWANDA-2021821} they believe that "Emotions hold a paramount role in the conversation, as it expresses context to the conversation.", this means that emotions are a part of a conversation and with that are needed to ensure valid analysis of a conversation.
 
 Furthermore Kapoor et al. \cite{KAPOOR2023120882} states that, emotions can differ across age groups, genders, cultures, and languages. Including data from diverse populations helps in developing inclusive and culturally sensitive ED models. It ensures that the models are not biased towards specific groups and can accurately detect emotions in a wide range of individuals.
 
@@ -155,9 +160,9 @@ Overcoming these challenges, lack of data and language fragmentation, is crucial
 \clearpage
 \section{Methodology}
 
-\subsection{Data procurement process of ED datasets in English and German}
+\subsection{Data Procurement and Parsing of ED datasets in English and German}
 \label{sec:data-procurement-process}
-The data procurement was relatively straight forward and in essence entailed using Google search terms for the Emotion Detection in English and German text languages. Some of the main German data was obtained from the dataset built by ETH's Emotion and Stance Detection for German Text \cite{mascarell-etal-2021-stance} which also hosts a good website with their findings \footnote{https://mtc.ethz.ch/research/natural-language-processing/emotion-stance.html}. The English dataset was downloaded from Kaggle \footnote{https://www.kaggle.com/datasets/pashupatigupta/emotion-detection-from-text} based on Tweets collected in 2021. The English dataset contains over 38,000 tweets and their corresponding emotion labeled. Unfortunately the German dataset only contains over 2,000 sentences and their respective emotions associated. this imbalance of the two dataset sizes will be corrected in the subsequent sections.
+The data procurement was relatively straight forward and once found by using multiple Google search terms for the Emotion Detection in English and German text languages. Some of the main German data was obtained from the dataset built by ETH's Emotion and Stance Detection for German Text \cite{mascarell-etal-2021-stance} which also hosts a good website with their findings\footnote{https://mtc.ethz.ch/research/natural-language-processing/emotion-stance.html}. The English dataset was downloaded from Kaggle\footnote{https://www.kaggle.com/datasets/pashupatigupta/emotion-detection-from-text} based on Tweets collected in 2021. The English dataset contains over 38,000 tweets and their corresponding emotion's labeled. Unfortunately the German dataset only contained just over 2,500 sentences and their respective emotions associated with it. Unfortunately this imbalance (see Table \ref{table:file-details}) of the two dataset sizes will had to be corrected and is explained in detail in the subsequent sections.
 
 \begin{table}[h!]
 \centering
@@ -175,7 +180,7 @@ The data procurement was relatively straight forward and in essence entailed usi
 \label{table:file-details}
 \end{table}
 
-An important part of the process is to make sure we match the English emotions to those of the German language emotions. Since the two languages are dissimilar we opted to match exact emotions to each other that can be seen in Table \ref{table:dataset_labels} below.
+An important part of the process is to make sure we match / link the English emotions to those of the German language emotions. Since the two languages are dissimilar we opted to match exact emotions to each other that can be seen in Table \ref{table:dataset_labels} below. The linking yielded our eight (8) emotions we previously discussed in Sections \ref{sec:human-emotion-as-a-theoretical-framework}. Details on how we formatted the the two (English and German) datasets to each other can be viewed in the Appendix \ref{appendix:dataset_english} and \ref{appendix:dataset_german}.
 
 \begin{table}[h!]
 \centering
@@ -206,9 +211,9 @@ An important part of the process is to make sure we match the English emotions t
 \label{table:dataset_labels}
 \end{table}
 
-Details on how we formatted the the two (English and German) datasets to each other can be viewed in the Appendix \ref{appendix:dataset_english} and \ref{appendix:dataset_german}
+The processing of two ED datasets to be synchronized or linked to the emotion is important. The first will be in English and the second in German. Each dataset will be translated into the other's language for extension purposes. 
 
-The processing of two ED datasets to be synchronized to the emotion is important. The first will be in English and the second in German. Each dataset will be translated into the other’s language for extending purposes. And each row will hold the English and German sentence. As an example Figure \ref{fig:dataset-extension} depicts the original English dataset will be extended by the translated German dataset. By this simple process the English dataset got larger for training purposes.
+We decided to build the data to support that each row of each dataset will hold the English and German sentence. As an example Figure \ref{fig:dataset-extension} depicts the original English dataset will be extended by the translated German (German $\Rightarrow$ English) dataset. By this simple process the English dataset got larger for training purposes.
 
 \begin{figure}[h]
     \centering
@@ -219,17 +224,18 @@ The processing of two ED datasets to be synchronized to the emotion is important
 
 The reason for selecting German in this research project was based on the author\footnote{Richard Hoehn} being fluent in English and German and hence being able to easily traverse the two languages while working on the code for dataset translations and formatting. It was much easier to create the emotion cross reference Table \ref{table:dataset_labels} and also check the translation results due to the dual language benefit.
 
-Once the two datasets have been translated, we now extend the original language dataset with the translated one.By this approach we are in essence extending the original datasets to create a larger one with the foreign language data. With both extended datasets we can now train our ML models for English and German.
+Once the two datasets have been translated, we now extend the original language dataset with the translated one. By this approach we are in essence extending the original datasets to create a larger one with the foreign language data. With both extended datasets we can now train our ML models for English and German.
 
-\subsection{Development of a translation application for converting different languages into English and vice versa}
+\subsection{Translation Application for Converting English to German and Vice Versa}
 Translation of the emotion datasets was performed with Google Translator based on the Medium article\cite{Nidhaloff_how_to_translate_text_with_python} in which the author describes options for simple API translations. Google Cloud Translation was use mainly due to it's free nature and ease of use for this project. There are however many other text based API translation services that could have been used and might yield in some circumstance even better results.
 
 As an example the following is a brief introduction to Google Translator's API with the code snippet below depicting the ease of use to translate text via an API.
 
+\begin{code}
+\centering
 \begin{quote}
 \begin{minted}[samepage, fontsize=\small]{python}
-#
-# Using Deep Translator to leveage Google Translate
+# Using Deep Translator to leverage Google Translate
 # Link: https://cloud.google.com/translate/docs/reference/libraries/v2/python
 from deep_translator import GoogleTranslator
 
@@ -240,11 +246,12 @@ print(translated) # Schokoladenmilch schmeckt durch einen Strohhalm viel besser.
 
 translated_back = GoogleTranslator(source='auto', target='en').translate(translated)
 print(translated_back) # Chocolate milk tastes much better through a straw.
-
 \end{minted}
+\captionof{listing}{Google Translate Example Code}
 \end{quote}
+\end{code}
 
-Based on the above translation example the CSV (English) and JSON (German) datasets were individually loaded, parsed, and translated to their respective counter-part languages. Details of the application can be found in the Appendix \ref{appendix:dataset_english} for English and Appendix \ref{appendix:dataset_german} for the German processing. We decided to only use 1,500 rows from each language. This decision was made since the German (DE\footnote{DE = German}) dataset was not much larger than that once filtering and processing was completed. This meant that the English (EN\footnote{EN = English}) dataset was randomly paired down to 1,500 to match that of the German. 
+Based on the above translation example the CSV\footnote{CSV = Comma Separated Values} (English) and JSON\footnote{JSON = JavaScript Object Notation} (German) datasets were individually loaded, parsed, and translated to their respective counter-part languages. Details of the application can be found in the Appendix \ref{appendix:dataset_english} for English and Appendix \ref{appendix:dataset_german} for the German processing. We decided to only use 1,500 rows from each language. This decision was made since the German (DE\footnote{DE = German}) dataset was not much larger than that once filtering and processing was completed. This meant that the English (EN\footnote{EN = English}) dataset was randomly paired down to 1,500 to match that of the German. 
 
 Each translated file now contains four (4) columns that are labeled in Tables \ref{table:pd_de_translated} and \ref{table:pd_en_translated} with the exact same column naming.
 
@@ -293,13 +300,14 @@ Each translated file now contains four (4) columns that are labeled in Tables \r
 \end{table}
 
 \subsection{Training Multiple ML models with PySpark}
-After the completion of translating and processing the Englsih and German datasets we come to training our models. Using the datasets from Tables \ref{table:pd_de_translated}, \ref{table:pd_en_translated}, and \ref{table:ml_models} that list an approximate $\sim$1,275 and $\sim$2,775 features for training.
+After the completion of translating and processing the English and German datasets we come to training our models. Using the datasets from Tables \ref{table:pd_de_translated}, \ref{table:pd_en_translated}, and \ref{table:ml_models} that list an approximate $\sim$1,275 and $\sim$2,775 features for training.
 
 It is important to note that in order to accurately test and compare the original and the extended datasets to each other we made sure that the test data was the same. to do this we randomly extracted 15\% of the original datasets (English and German) before extending the original with the translated datasets.
 
+\begin{code}
+\centering
 \begin{quote}
 \begin{minted}[samepage, fontsize=\small]{python}
-#
 # Split the English and German Dataframes for Training and Testing
 # We are using a 15/85 Split
 df_en_train, df_en_test = df_en.randomSplit([0.85, 0.15], seed=2023)
@@ -310,9 +318,10 @@ df_de_train, df_de_test = df_de.randomSplit([0.85, 0.15], seed=2023)
 # Using *df_en_train.columns ensure that the columns are matched with the union
 df_en_train_extended = df_en_train.union(df_de.select(*df_en_train.columns))
 df_de_train_extended = df_de_train.union(df_en.select(*df_de_train.columns))
-
 \end{minted}
 \end{quote}
+\captionof{listing}{Linking the English and German Emotions to the same label}
+\end{code}
 
 In Chowanda et al. paper\cite{CHOWANDA-2021821} on Text-based Emotion Techniques multiple algorithms were proposed, our research focused on just three (3) out of the six from the paper since the others had lower prediction rates based on the paper\'s conclusions. The algorithms tested in this research project ranged from the traditional machine learning to deep learning techniques, they are:
  \begin{itemize}
@@ -359,11 +368,55 @@ Each of these algorithms used and their results are listed in the Results and An
     225 same as Model "C" \\
     \hline
 \end{tabular}
-\caption{ML Models and their respective settings}
+\caption{ML Models and their respective Train and Test Rows}
 \label{table:ml_models}
 \end{table}
 
-The results of the testing resulted in some interesting parts that can be viewed in Table \ref{table:ml-prediction-result-versus-test-data}. We grouped the label by count from the test data (both English and German) and compared the predicted result counts to those. It became very clear that there was a strong bias on the GLM (Linear Regression) model that essentially proposed that all sentences evalued to the same output both in English and German.
+The results of the testing resulted in some interesting parts that can be viewed in Table \ref{table:ml-prediction-result-versus-test-data}. We grouped the label by count from the test data (both English and German) and compared the predicted result counts to those. It became very clear that there was a strong bias on the GLM (Linear Regression) model that essentially proposed that all sentences evaluated to the same output both in English and German. 
+
+\subsection{Creating an API for Translation and Parallel Processing}
+\label{sec:create-api-for-translation-and-parallel-processing}
+
+In order for a user to access and get prediction results from all three (Random Forest, Naives Bayes, and Linear Regression) ML models trained in both English and German in real-time we crated a Jupyter Notebook that starts an Apache PySpark\footnote{PySpark: https://spark.apache.org/docs/latest/api/python/index.html} session that is accessed via the local server listen on \texttt{https://127.0.0.1:8080}. The details of the RESTful the server can be found in Appendix \ref{appendix:code-api-server}.
+
+The server listens for GET requests and evaluates a querystring either called \texttt{sentence\_en} or \texttt{sentence\_de} if an English sentence is sent then the server translates to German and if a German is sent then it translates to English. Each sentence is then tokenized, formatted, and processed on the previously trained ML models in both languages.
+
+Once all the the ML model predictions have completed, we then lookup the emotion associated with the individually predicted labels and build a response \texttt{JSON} object to pass back the calling application. The \texttt{JSON} object (Source Code: \ref{code:json-object}) contains the original sentence and translated, plus each emotions predicted label by the six previously trained models. In addition the main data, and \texttt{metadata} object is created that holds the PySpark version, start, and end times, including the processing time in seconds.
+
+\begin{code}
+\begin{quote}
+\begin{minted}[samepage, fontsize=\small]{json}
+{
+  "metadata": {
+    "datetime": {
+      "elapsed": 1.651038,
+      "end": "Mon, 14 Aug 2023 12:10:35 GMT",
+      "start": "Mon, 14 Aug 2023 12:10:33 GMT"
+    },
+    "spark": "3.3.2"
+  },
+  "predictions": {
+    "de_lr": "enthusiasm",
+    "de_nb": "relief",
+    "de_rfc": "enthusiasm",
+    "en_lr": "neutral",
+    "en_nb": "love",
+    "en_rfc": "happiness"
+  },
+  "sentence": {
+    "english": "What a wonderful world this is!",
+    "german": "Was für eine wundervolle Welt das ist!"
+  }
+}
+\end{minted}
+\captionof{listing}{JSON output from API}
+\label{code:json-object}
+\end{quote}
+\end{code}
+
+\subsection{Evaluation Metrics and Methodologies for Measuring the Performance}
+\label{sec:evaluation-metrics-and-methodologies}
+The evaluation of ML models trained on the English, German and their respective extension datasets is a critical step in assessing their performance and reliability. We chose to use the MulticlassClassificationEvaluator\footnote{URL: https://spark.apache.org/docs/latest/api/python/reference/api/pyspark.ml.evaluation.MulticlassClassificationEvaluator.html} because is a well known tool in the field of natural language processing (NLP) research, specifically in multi-class classification tasks such as emotion detection that has multiple labels associated with it; in our case eight (8) see Table \ref{table:dataset_labels} on Page \pageref{table:dataset_labels}. Generally this evaluator is used to evaluate the performance of machine learning (ML) models, using transformer-based architectures like BERT, RoBERTa, or DistilBERT\cite{Sanh2019-DistilBERT-AD}, with DistilBERT\cite{Sanh2019-DistilBERT-AD} being the one we used in this research project.
 
 \begin{table}[h!]
 \centering
@@ -421,12 +474,6 @@ The results of the testing resulted in some interesting parts that can be viewed
 \label{table:ml-prediction-result-versus-test-data}
 \end{table}
 
-In order for each of the three ML models to be processed at the same time we crated a Jupyter Notebook that starts an Apache PySpark\footnote{PySpark: https://spark.apache.org/docs/latest/api/python/index.html} session that is accessed via the local server running that accepts RESTful API calls with details of the server in Appendix \ref{appendix:code-api-server}.
-
-\subsection{Evaluation Metrics and Methodologies for Measuring the Performance}
-\label{sec:evaluation-metrics-and-methodologies}
-The evaluation of ML models trained on the English, German and their respective extension datasets is a critical step in assessing their performance and reliability. We chose to use the MulticlassClassificationEvaluator\footnote{URL: https://spark.apache.org/docs/latest/api/python/reference/api/pyspark.ml.evaluation.MulticlassClassificationEvaluator.html} because is a well known tool in the field of natural language processing (NLP) research, specifically in multi-class classification tasks such as emotion detection that has multiple labels associated with it; in our case eight (8) see Table \ref{table:dataset_labels} on Page \pageref{table:dataset_labels}. Generally this evaluator is used to evaluate the performance of machine learning (ML) models, using transformer-based architectures like BERT, RoBERTa, or DistilBERT\cite{Sanh2019-DistilBERT-AD}, with DistilBERT\cite{Sanh2019-DistilBERT-AD} being the one we used in this research project.
-
 The MulticlassClassificationEvaluator provides the essential evaluation metrics, including accuracy, Precision (eq: \ref{eq:precision}), Recall (eq: \ref{eq:recall}), and F1 Score (eq: \ref{eq:f1-score}) for ED classifications. These metrics provide valuable insights into a model's ability to correctly classify emotions across multiple classes and languages. Our research project is no different and the following measurements were used for our analysis:
 \begin{itemize}
 
@@ -437,6 +484,19 @@ The MulticlassClassificationEvaluator provides the essential evaluation metrics,
 \end{itemize}
 
 While evaluating the models we focused on the Accuracy and the F1 Score to illustrate the prediction results of the original versus extended datasets, and also compared the different algorithms to each other. As an added example simply using the accuracy to evaluate a model can be miss-leading and therefore in our case using the F1 Score, that is directly correlated to the Precision (eq: \ref{eq:precision} and Recall (eq: \ref{eq:recall}) is immensely important to understanding the ones models and finding the best of for the task of Emotion Detection using Original and Extended datasets.
+
+\subsection{Using an API to Translate in Real-Time for Dual Prediction}
+\label{sec:using-api-to-translate-in-ral-time}
+The last stage of this research project was devoted to testing the API by use of a simple webpage. In order to accurately test and get real-world results and a sense on the real-time processing of a Emotion Detection a simple webpage was build to give a user the sense of the conclusion of the project. In Figure \ref{fig:demo-api-webpage} a brief screenshot of some testing can be seen. 
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/Demo-Api-2.png}
+    \caption{Demo API Webpage}
+    \label{fig:demo-api-webpage}
+\end{figure}
+
+In the screenshot (Figure: \ref{fig:demo-api-webpage}) example a sentence was entered in the English text-box and the "Predict" button pressed. The API took about $\sim$1.6seconds to translate the English to German and then process both sentences on the pre-trained ML models, build the \texttt{JSON} object and return it to the application.
 
 \subsection{Written \& Oral Presentation of Research Finding}
 In conclusion of the project a research paper and oral presentation is required to pass the  MTSU Computation Data Science PhD Qualifying Exam. The listing of all the datasets used, code for the application, and details of the research project process in this research paper is openly available and hosted on a GitHub repository, allowing for easy access, reproducible, and collaborative engagement with the research findings. The repository is open and available under: \texttt{https://github.com/richardhoehn/mtsu.coms.qualifying-exam}\cite{Hoehn_Improving_Emotion_Detection_2023}. In addition of all the code being listed in a public repository the paper was comprised and build using \LaTeX\footnote{LaTeX UR: https://www.latex-project.org/}.
@@ -590,6 +650,53 @@ It should be noted that although the improvement values are fairly large negativ
 While extending datasets for machine learning training can often improve\cite{Sarker2021} model performance, it's important to recognize that this approach has its limitations, especially in ML models that can reach a limit on training data. In our case, relying on translation services for dataset expansion might not consistently yield better results when extending the data from translated text. These services, in our case using Google Translate\footnote{Google Cloud Translate URL: https://cloud.google.com/translate} can introduce errors or inaccuracies in translations especially in the context of emotions of a particular text, leading to noisy or incorrect training data. Consequently, the models may learn from erroneous information, which did negatively impact our models performance on the ED tasks.
 
 Specifically in our case of extending the original English and German datasets with translated data seems to indicate that the sentences and structure are not the same and therefore the prediction rates went down as the models got more diluted.
+
+
+\subsection{Impact Using API for Real-Time Translation}
+\label{sec:impact-using-api-for-real-time-translation}
+With the help of the webpage (Figure \ref{fig:demo-api-webpage} on \pageref{fig:demo-api-webpage}) a sense of the inaccuracy was also presented. Each round trip to the API took an between 1.4 and 1.6seconds. The prediction results mirrored those of Tables \ref{table:en_testing_results} and \ref{table:de_testing_results} which in turn made the usefulness of the translation not practical as can be seen in Table \ref{table:api-test-results} below.
+
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ | N | M | L | N | L | N | }
+    \hline
+    \multicolumn{6}{|c|}{Webpage API Test} \\
+    \hline
+     & 
+    \multicolumn{2}{c|}{English} &
+    \multicolumn{2}{c|}{German} & 
+     \\
+    \hline
+    Test &
+    Emotion & Sentence &
+    Emotion & Sentence &
+    Time \\
+    \hline
+    A &
+    Worry & This is bad idea and we need to stop right now &
+    Anger & Dies ist eine schlechte Idee und wir müssen jetzt aufhören &
+    1.49s \\
+    \hline
+    B &
+    Happiness & What a wonderful world this is! &
+    Relief & Was fur eine wundervolle Welt das ist! &
+    1.65s \\
+    \hline
+    C &
+    Happiness & I am so happy about this news! &
+    Fun & Ich freue mich sehr uber diese Nauigkeiten! &
+    1.64s \\
+    \hline
+    D &
+    Sadness & Gosh I hate doing this today. &
+    Relief & Meine Güte, ich hasse es heute. &
+    2.56s \\
+    \hline
+\end{tabular}
+\caption{API Webpage Test Results}
+\label{table:api-test-results}
+\end{table}
 
 \subsection{Findings and Implications for Improving Emotion Detection}
 Based on the improvement results in Sections \ref{sec:english-dataset-results} and \ref{sec:german-dataset-results} it seems that using translation to extend both the English and German datasets resulted in a negative outcomes. The best outcomes were using a simple Linear Regression model on the English and German, however based on the F1 score (EQ \ref{eq:f1-score}) of the Random Forest Classifier it seems to perform the best on both English and German. 

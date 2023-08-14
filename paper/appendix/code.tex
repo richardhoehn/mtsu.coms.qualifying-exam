@@ -37,18 +37,48 @@ The RESTful\footnote{RESTful API is an interface that two computer systems use t
 
 Flask is a lightweight and simple to use web framework in Python, allowing developers to create web applications and APIs. Due to it's simplicity and components design, Flask allowed us to rapidly build and interactive web service fro demonstration purposes on this project.
 \begin{minted}[fontsize=\small]{python}
-# Setup API 
+# Setup Spark Session
+from pyspark.sql import SparkSession
+
+# Import API Modules 
 from flask import Flask, request, jsonify
+from flask_cors import CORS
+import datetime
+
+# Import Translator
 from googletrans import Translator
 
-# Setup
+# Impport Tokenizer and Pipeline Tools
 from transformers import DistilBertTokenizer
 from pyspark.ml.pipeline import PipelineModel
 
+# Setup Spark Session
+sc = SparkSession \
+        .builder \
+        .master("local[*]") \
+        .appName("API-Demo") \
+        .getOrCreate()
+
+# Add Numerical Label for Emotions
+emotion_key = {
+    "boredom": 0,
+    "love": 1,
+    "relief": 2,
+    "fun": 3,
+    "hate": 4,
+    "neutral": 5,
+    "anger": 6,
+    "happiness": 7,
+    "surprise": 8,
+    "sadness": 9,
+    "worry": 10,
+    "enthusiasm": 11,
+    "empty": 12,
+    "---": 13
+}
 
 # Initialize the AutoTokenizer
 tokenizer = DistilBertTokenizer.from_pretrained("distilbert-base-multilingual-cased")
-
 
 # Load Saved Models
 model_en_rfc = PipelineModel.load("./models/model_en_rfc.model")
@@ -60,6 +90,7 @@ model_de_lr = PipelineModel.load("./models/model_de_lr.model")
 
 
 app = Flask(__name__)
+CORS(app)  # Use the CORS class to enable CORS for the entire app
 translator = Translator()
 
 # Setup Emotion Key Reverse
@@ -67,12 +98,20 @@ emotions = {v: k for k, v in emotion_key.items()}
 
 @app.route('/predict', methods=['GET'])
 def transform_data():
+    start_time = datetime.datetime.now()
     sentence_en = request.args.get('sentence_en')
+    sentence_de = request.args.get('sentence_de')
     
-    if not sentence_en:
-        return jsonify({'error': 'No Sentence (EN) provided!'})
+    print(f"English: {sentence_en}")
+    print(f"German: {sentence_de}")
     
-    sentence_de = translator.translate(sentence_en, dest="de").text
+    if sentence_en:
+        sentence_de = translator.translate(sentence_en, dest="de").text
+    elif sentence_de:
+        sentence_en = translator.translate(sentence_de, dest="en").text
+    else:
+        return jsonify({'error': 'No Sentence provided!'})
+    
     print(f"English: {sentence_en}")
     print(f"German: {sentence_de}")
     
@@ -90,11 +129,15 @@ def transform_data():
     predictions_de_nb = model_de_nb.transform(df_de_api)
     predictions_de_lr = model_de_lr.transform(df_de_api)
     
+    # Get End Time
+    end_time = datetime.datetime.now()
+    elapsed_time = (end_time - start_time).total_seconds()
+    
     #Build Response
     resp = {
         "sentence": {
-            "english":sentence_en,
-            "german":sentence_de,
+            "english": sentence_en,
+            "german": sentence_de,
         },
         "predictions": {
             "en_rfc": emotions.get(predictions_en_rfc.collect()[0]["prediction"]),
@@ -104,11 +147,20 @@ def transform_data():
             "de_nb":  emotions.get(predictions_de_nb.collect()[0]["prediction"]),
             "de_lr":  emotions.get(predictions_de_lr.collect()[0]["prediction"]),
         },
+        "metadata": {
+            "spark": sc.version,
+            "datetime": {
+                "start": start_time,
+                "end": end_time,
+                "elapsedInSeconds": elapsed_time,
+            }
+        }
     }
     
     return jsonify(resp)
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8080)
+
 \end{minted}
 \clearpage
