@@ -5,13 +5,8 @@ All examples in this appendix are created via Panda and PySpark using data frame
 \subsection{Translation Setup}
 All example code was created using Jupyter Notebooks.
 \begin{minted}[fontsize=\small]{python}
-# *********************
-# *** Setup Section ***
-# *********************
-
 import pandas as pd
 
-# Emotion DataFrame
 # This was predtermined by review of the emotion from English to German
 emotion_key = {
     "boredom": "---",
@@ -32,7 +27,6 @@ emotion_key = {
 
 # Create a DataFrame from the emotion_key dictionary
 df_emotions = pd.DataFrame(emotion_key.items(), columns=['emotion_en', 'emotion_de'])
-
 
 # *******************
 # *** Translation ***
@@ -55,17 +49,15 @@ def translate(sentence, dest_lang):
 \clearpage
 
 
-\subsection{Details on English Dataset}
+\subsection{Details on English Dataset Parsing and Formatting}
 \label{appendix:dataset_english}
 The English dataset is based on tweets\footnote{Tweets from Twitter} that are saved as a \texttt{csv}\footnote{csv = Comma Separated Values} file. The following code was use to filter and process the file for use in this project.
 \begin{minted}[fontsize=\small]{python}
 # *********************************
 # *** English Data Preparations ***
 # *********************************
-
 import pandas as pd
 from tqdm import tqdm
-
 
 # Load English CSV File into a Dataframe
 df_en = pd.read_csv("data/english.csv")
@@ -89,15 +81,10 @@ df_en = df_en.rename(columns = {'sentiment': 'emotion_en', 'content': 'sentence_
 
 # Merge German Emotions onto English
 df_en = pd.merge(df_en, df_emotions, on='emotion_en', how='left')
-
-# Add German Sentence Column
-df_en["sentence_de"] = ""
-
-# Randomly select 1500 rows
-df_en = df_en.sample(n=1500, random_state=2023)
+df_en["sentence_de"] = "" # Add German Sentence Column
+df_en = df_en.sample(n=1500, random_state=2023) # Randomly select 1500 rows
 
 df_en.to_csv('./data/pd_en.csv', index=False)
-
 
 # Iterate over the rows with tqdm to show the progress
 for index, row in tqdm(df_en.iterrows(), total=df_en.shape[0]):
@@ -106,22 +93,19 @@ for index, row in tqdm(df_en.iterrows(), total=df_en.shape[0]):
     # Save Sentence on Column
     df_en.at[index, 'sentence_de'] = sentence
 
-
 df_en.to_csv('./data/pd_en_translated.csv', index=False)
 \end{minted}
 \clearpage
 
-\subsection{Details on German Dataset}
+\subsection{Details on German Dataset Parsing and Formatting}
 \label{appendix:dataset_german}
 The German dataset was downloaded from the ETH's\footnote{ETH (German: Eidgenössische Technische Hochschule) or Swiss Federal Institute of Technology} servers via "link" as a \texttt{JSON} file. Since the the file was \texttt{JSON} we will need to filter and explode the file based on teh emotions that are attached to it.
 \begin{minted}[fontsize=\small]{python}
 # *********************************
 # *** German Data Preparations ***
 # *********************************
-
 import pandas as pd
 from tqdm import tqdm
-
 
 # Load German JSON File into a DataFrame
 df_de = pd.read_json("data/german.json", lines=True)
@@ -151,17 +135,12 @@ df_de = df_de.drop("snippet", axis=1)
 df_de = df_de.rename(columns={'title': 'sentence_de'})
 df_de = df_de.rename(columns={'article_emotion': 'emotion_de'})
 
-# Merge Englsih Emotions onto German
+# Merge English Emotions onto German
 df_de = pd.merge(df_de, df_emotions, on='emotion_de', how='left')
-
-# Add English Sentence Column
-df_de["sentence_en"] = ""
-
-# Randomly select 1500 rows
-df_de = df_de.sample(n=1500, random_state=2023)
+df_de["sentence_en"] = "" # Add English Sentence Column
+df_de = df_de.sample(n=1500, random_state=2023) # Randomly select 1500 rows
 
 df_de.to_csv('./data/pd_de.csv', index=False)
-
 
 # Iterate over the rows with tqdm to show the progress
 for index, row in tqdm(df_de.iterrows(), total=df_de.shape[0]):
@@ -169,7 +148,6 @@ for index, row in tqdm(df_de.iterrows(), total=df_de.shape[0]):
     sentence = translate(row["sentence_de"], 'en')
     # Save Sentence on Column
     df_de.at[index, 'sentence_en'] = sentence
-
 
 df_de.to_csv('./data/pd_de_translated.csv', index=False)
 \end{minted}

@@ -1,16 +1,114 @@
 \section{Appendix -- Application \& Code Details}
-Hello World - Application \& Code Details
-\subsection{Application}
-\label{appendix:code_application}
-Hello World - Application
-\clearpage
+In this appendix we aim to supply details to the code and application blocks of this project. It should be noted that some of the code has been edited to fit on these pages and might not represent verbatim the code in the GIT repository.
 
-\subsection{Code Details}
-Hello World - Code Details
+All code was developed and test using a MacBook PRO running \texttt{Ventura 13.4.1}. Since PySpark was developed for cluster processing it may seem counter intuitive to build PySpark code for a Mac; however the intent is that some of this research can be further used on clusters in the future.
+
+\subsection{PySpark Session Setup}
+\label{appendix:py-spark-setup}
+\begin{minted}[fontsize=\small]{python}
+# Setup Spark Session
+from pyspark.sql import SparkSession
+
+# Get Imports Needed
+from pyspark.sql.functions import col, udf, regexp_replace, lower
+from pyspark.sql import functions as F
+
+# Get Datatypes needed for DataFrame manipulation
+from pyspark.sql.types import IntegerType, StringType, ArrayType
+
+# Other Imports
+import re  # Import the "re" module for regular expressions
+
+# Setup Spark Session
+sc = SparkSession \
+        .builder \
+        .master("local[*]") \
+        .appName("Qualyfing-Exam") \
+        .getOrCreate()
+
+# Print Spark Version being run
+print("Spark V: ", sc.version)
+\end{minted}
+\clearpage
 
 \subsection{RESTful API Server}
 \label{appendix:code-api-server}
 The RESTful\footnote{RESTful API is an interface that two computer systems use to exchange information securely over the internet.} API Server will be a simple Python Flask server listening on port \texttt{8080} on the local machine.
 
+Flask is a lightweight and simple to use web framework in Python, allowing developers to create web applications and APIs. Due to it's simplicity and components design, Flask allowed us to rapidly build and interactive web service fro demonstration purposes on this project.
+\begin{minted}[fontsize=\small]{python}
+# Setup API 
+from flask import Flask, request, jsonify
+from googletrans import Translator
 
+# Setup
+from transformers import DistilBertTokenizer
+from pyspark.ml.pipeline import PipelineModel
+
+
+# Initialize the AutoTokenizer
+tokenizer = DistilBertTokenizer.from_pretrained("distilbert-base-multilingual-cased")
+
+
+# Load Saved Models
+model_en_rfc = PipelineModel.load("./models/model_en_rfc.model")
+model_en_nb = PipelineModel.load("./models/model_en_nb.model")
+model_en_lr = PipelineModel.load("./models/model_en_lr.model")
+model_de_rfc = PipelineModel.load("./models/model_de_rfc.model")
+model_de_nb = PipelineModel.load("./models/model_de_nb.model")
+model_de_lr = PipelineModel.load("./models/model_de_lr.model")
+
+
+app = Flask(__name__)
+translator = Translator()
+
+# Setup Emotion Key Reverse
+emotions = {v: k for k, v in emotion_key.items()}
+
+@app.route('/predict', methods=['GET'])
+def transform_data():
+    sentence_en = request.args.get('sentence_en')
+    
+    if not sentence_en:
+        return jsonify({'error': 'No Sentence (EN) provided!'})
+    
+    sentence_de = translator.translate(sentence_en, dest="de").text
+    print(f"English: {sentence_en}")
+    print(f"German: {sentence_de}")
+    
+    words_en = tokenizer.tokenize(sentence_en)
+    words_de = tokenizer.tokenize(sentence_de)
+
+    # Create Englsih & German Dataframe
+    df_en_api = sc.createDataFrame([(sentence_en, words_en)], ["sentence", "words"])
+    df_de_api = sc.createDataFrame([(sentence_de, words_de)], ["sentence", "words"])
+    
+    predictions_en_rfc = model_en_rfc.transform(df_en_api)
+    predictions_en_nb = model_en_nb.transform(df_en_api)
+    predictions_en_lr = model_en_lr.transform(df_en_api)
+    predictions_de_rfc = model_de_rfc.transform(df_de_api)
+    predictions_de_nb = model_de_nb.transform(df_de_api)
+    predictions_de_lr = model_de_lr.transform(df_de_api)
+    
+    #Build Response
+    resp = {
+        "sentence": {
+            "english":sentence_en,
+            "german":sentence_de,
+        },
+        "predictions": {
+            "en_rfc": emotions.get(predictions_en_rfc.collect()[0]["prediction"]),
+            "en_nb":  emotions.get(predictions_en_nb.collect()[0]["prediction"]),
+            "en_lr":  emotions.get(predictions_en_lr.collect()[0]["prediction"]),
+            "de_rfc": emotions.get(predictions_de_rfc.collect()[0]["prediction"]),
+            "de_nb":  emotions.get(predictions_de_nb.collect()[0]["prediction"]),
+            "de_lr":  emotions.get(predictions_de_lr.collect()[0]["prediction"]),
+        },
+    }
+    
+    return jsonify(resp)
+
+if __name__ == '__main__':
+    app.run(host='127.0.0.1', port=8080)
+\end{minted}
 \clearpage
