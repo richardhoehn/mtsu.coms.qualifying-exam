@@ -51,13 +51,13 @@
 \maketitle
 
 \begin{abstract}
-This Qualifying Exam\footnote{Comp. and Data Science PhD students are required to complete a Qualifying Exam in their first year} research paper investigates the potential of improving Emotion Detection (ED) through translation of extended text data to multiple Machine Learning (ML) models trained in different languages. Our research focused on  English (X\footnote{X is formerly known as Twitter} threads) and German (voting articles) datasets to improve prediction accuracy. By this our research aims to address the challenges posed by the lack of comprehensive labeled datasets and language fragmentation in ED research and projects.
+This Qualifying Exam\footnote{Comp. and Data Science PhD students are required to complete a Qualifying Exam in their first year} research paper investigates the potential of improving Emotion Detection (ED) through translation of extended text data to multiple Machine Learning (ML) models trained in different languages. Our research focused on  English and German text data to improve prediction accuracy. By this our research aims to address the challenges posed by the lack of comprehensive labeled datasets and language fragmentation in ED research and projects.
 
-By extending an original English language dataset with a translated dataset from German to English the training data (extended dataset) becomes larger and the hope is that better prediction rates can be achieved in ED analysis applications due to ML training having more data for learning. Furthermore, translating English to German to extend the German dataset and training another ML model using PySpark and accessing both models in real-time by a simple RESTful API may improve the prediction rates even more by dual processing a sentence at the same time.
+By extending an original English language dataset with a translated dataset from German to English the training data (extended dataset) becomes larger and the hope is that better prediction rates can be achieved in ED analysis applications due to more ML training data. Furthermore, translating English to German to extend the German dataset and training another ML model using PySpark and accessing both models in real-time by a simple RESTful API may improve the prediction rates even more by dual processing a sentence at the same time.
 
-In order to present the results presented both orally to the MTSU's Computational Data \& Science Committee and within this paper labeled datasets both in English and German were collected, parsed, cleaned, translated, and two ML models built that can be accessed via an API to get a prediction by inputting sentences both in German or English via GET method using a simple query-string.
+In order to present the results presented both orally to the MTSU's Computational Data \& Science Committee and with this paper datasets both in English and German were collected, parsed, cleaned, translated, and two ML models built that can be accessed via an API to get a prediction by inputting sentences both in German or English via GET method using a simple query-string.
 
-Sadly the research and results point to the realization that extending the datasets by translation did not improve prediction rates of English or German. Some minor gains can be achieved by accessing both English and German models at the same time via the RESTful API but unfortunately the benefits may not really support the efforts. In conclusion it that much more data needs to be collected in order to be able to definitely answer this research question.
+Sadly the results point indicate that extending the datasets by translation did not improve prediction rates of English or German. Some minor gains may be achieved by accessing both English and German models at the same time via the RESTful API but unfortunately the benefits may not really support the efforts. We believe that in review that due to the many classes in this multi-class classification model that overfitting became an issue for certain labels and created a type memorization rather than learning effect on the data. In conclusion much more data needs to be collected or by use of AI created in order to be able to definitely answer this research question.
 \end{abstract}
 \clearpage
 
@@ -699,14 +699,28 @@ With the help of the webpage (Figure \ref{fig:demo-api-webpage} on \pageref{fig:
 \end{table}
 
 \subsection{Findings and Implications for Improving Emotion Detection}
-Based on the improvement results in Sections \ref{sec:english-dataset-results} and \ref{sec:german-dataset-results} it seems that using translation to extend both the English and German datasets resulted in a negative outcomes. The best outcomes were using a simple Linear Regression model on the English and German, however based on the F1 score (EQ \ref{eq:f1-score}) of the Random Forest Classifier it seems to perform the best on both English and German. 
+Based on the improvement results in Sections \ref{sec:english-dataset-results} and \ref{sec:german-dataset-results} it seems that using translation to extend both the English and German datasets resulted in a negative outcomes. The best outcomes were using a simple Linear Regression model on the English and German, however based on the F1 Score (Eq: \ref{eq:f1-score}) of the Random Forest Classifier it seems to perform the best on both English and German. This is because the false positive amount of one score on the accuracy is not taken into account and can easily skew the results when using a multi-class classification model.
 
-Unfortunately based on the results of extending the data our approach to also using real-time translation for multi-language models 
+Unfortunately based on the results of extending the data our approach to also using real-time translation for multi-language models by use of creating an API and translating text in real-time for both German and English seems to be unsatisfactory for any meaningful improvement.
+
+With both these findings, we believe that the data of only using $\sim$1,500 (original dataset) and $\sim$2,700 (extended dataset) to train models is insufficient\cite{overfitting-overview} when using a multi-class classification problem. By inference, if we have only 1,500 and divide (eq: \ref{eq:sentence-per-class}) those by our eight (Table: \ref{table:dataset_labels}) classes we simply do not have enough data to truly train the ML on the classes.
+
+\begin{equation}
+\begin{split}
+\frac{Features}{Labels}= \frac{Sentences}{Classes}=\frac{1,500}{8}=185 \\
+or=\frac{2,700}{8}=337
+\end{split}
+\label{eq:sentence-per-class}
+\end{equation}
+
+Taking this this point that the data is insufficient the implication of lack of classified data can result in a few major issues for our ML models. One, the lack of context for the models to work properly and learn intricate details of the English and German language. And second, in some cases where lack of class data is present the models memorize existing sentences and words rather than learning underlying patterns of said language. Both these issues are related to an phenom called overfitting\cite{overfitting-overview} present in many regression problems.
+
+Options for improvement are on the simple side to get our hands on more data, the second is much more nuanced, in that we find ways to take existing and labeled sentences and have machine find derivatives of such so we can create more intricate patterns for the machines to learn from.
 
 \subsection{Conclusion and Future Work}
-It's crucial to ensure the quality and accuracy of extended data, especially when language translation is involved, to prevent introducing more noise than meaningful information into the training process. Although the research did not garner any significant improvements by translating the German to English as a means on extending the English dataset, it actually made it the prediction results worse.
+It's crucial to ensure the quality and accuracy of extended data, especially when language translation is involved, to prevent introducing more noise than meaningful information into the training process. The implications of lack of data in ED analysis presented it self in this research that it wanted to try and overcome. Although the research did not garner any significant improvements by translating the German to English as a means on extending the English dataset, it actually made it the prediction results worse. We believe one of the main culprits of this that the data for learning based on eight classes was insufficient. As can be seen in Equation \ref{eq:sentence-per-class} from the previous section, the models most likely started memorizing the sentence rather than learn the intricacies of the labeled classes. This conclusion is arrived because some labels worked better than other, those that worked better were also more plentiful available in the training data.
 
-Future work includes testing and translating different models by using different translation services. Using Google Cloud's translation service was adequate for this research, however there are certainly better translation services that are available but are based on paid subscriptions.
+There tow areas of future research; one is to further testing and translating different models by using different translation services. Using Google Cloud's translation service was adequate for this research, however there are certainly better translation services that are available but are based on paid subscriptions. Second, another path to extend data would be to have AIs convert sentences to be similar but not the same by passing the sentence and the labeled class to an AI to generate more sentences with similar emotion attached to them. The hope would be that by mushrooming sentences that are based on an emotion and pass the sentence that we can create more labeled data.
 
 \clearpage
 \addcontentsline{toc}{section}{References}
