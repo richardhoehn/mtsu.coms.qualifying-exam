@@ -510,26 +510,31 @@ Using \LaTeX\;for this paper provides numerous benefits, some of which are porta
 \clearpage
 \section{Results and Analysis}
 \label{sec:results-and-analysis}
-The following section lists the prediction rates of training and testing of the original and extended datasets both in English and German. Overall results seem to indicate that there was no measurable benefit and even negative outcomes based on adding the extended data for Emotion Detection. In the below sub sections details on the results are listed by the common standards of using the below equations \ref{eq:accuracy}, \ref{eq:precision}, \ref{eq:recall}, and \ref{eq:f1-score} for Accuracy, Precision, Recall, and the F1 Score. It should be noted that ED is a Multi-class classification problem, which means that the machine learning process assigns the predictions from the sentence data to one of several predefined emotion categories (see Table \ref{table:dataset_labels}).
+This section lists the prediction rates of training and testing of the original and extended datasets both in English and German. Overall results seem to indicate that there was no measurable benefit and even negative outcomes from adding the extended data for Emotion Detection. In the subsections details on the results are listed by the common standards of using the below equations \ref{eq:accuracy}, \ref{eq:precision}, \ref{eq:recall}, and \ref{eq:f1-score} for Accuracy, Precision, Recall, and the F1 Score. It should be noted that ED is a multi-class classification problem, which means that the machine learning process assigns the predictions from the sentence data to one of several predefined emotion categories (see Table \ref{table:dataset_labels}).
 
 \subsection{Prediction Results of Original \& Extended Datasets}
 Overall the prediction results from the trained models is disappointing. Using the Random Forrest Classifier described in Section \ref{sec:evaluation-metrics-and-methodologies} provided the best prediction results based on a combination of the Accuracy and the F1 Score. It should be noted although the accuracy may be slightly better on the GLM models for both English and German, if one reviews the F1 Score, the RFC model performs better.
 
-Oddly, the prediction results with the extended data where lower than using the original (non-extended) data for training. In the analysis and conclusions section \ref{sec:analysis-of-impact-of-extending-datasets} below details on why this may be the case are discussed in detail.
+Oddly, the prediction results with the extended data where lower than using the original (non-extended) data for training. In the Analysis and Conclusions section \ref{sec:analysis-of-impact-of-extending-datasets} details on why this may be the case are discussed in detail.
 
 \subsubsection{Formulas and Equations used in Analysis}
-The accuracy (eq: \ref{eq:accuracy}) of any machine learning model is a clear and easily comprehend-able way to understand the performance of a model. However, it is important to consider the context and potential trade-offs with other metrics, as high accuracy alone might not capture the full picture of a model's performance.
+The accuracy (eq: \ref{eq:accuracy}) of any machine learning model is a clear and easily comprehend-able way to understand the performance of a model. However, it is important to consider the context and potential trade-offs with other metrics, as high accuracy alone might not adequately capture the full picture of a model's performance. This can be especially true for multi-class classification models such as the ED analysis that we are working on.
+
 \begin{equation}
 Accuracy = \frac{TP+TN}{TP+TN+FP+FN}
 \label{eq:accuracy}
 \end{equation}
 
-The Precision (eq: \ref{eq:precision}) focuses in detail on the accuracy of positive predictions (TP)\footnote{Positive Predictions = TP (True Positive)} made by the model. Per Google Cloud's definition the precision answers: What proportion of positive predictions where actually correct?
+The Precision (eq: \ref{eq:precision}) focuses in detail on the accuracy of positive predictions (TP)\footnote{Positive Predictions = TP (True Positive)} made by the model. According to Google Cloud's definition, precision answers the question: What proportion of positive predictions were actually correct?
+
 \begin{equation}
 Precision = \frac{TP}{TP+FP}
 \label{eq:precision}
 \end{equation}
-Since our project is a multi-class classification project we will need to actually use Micro Averaging for the Precision. With this in mind we extend our simple equation \ref{eq:precision} of precision to incorporate micro averaging is illustrated in equation \ref{eq:precision_micro_avg}.
+
+Since our project is a multi-class classification project we will need to utilize Micro Averaging for the Precision. With this in mind, we extend our simple equation \ref{eq:precision} for precision to incorporate micro averaging as defined in equation 
+\ref{eq:precision_micro_avg}.
+
 \begin{equation}
 Precision_{MicroAvg} = \frac{(TP_1 + TP_2 + \ldots + TP_n)}{(TP_1 + TP_2 + \ldots + TP_n + FP_1 + FP_2 + \ldots + FP_n)}
 \label{eq:precision_micro_avg}
@@ -542,21 +547,21 @@ Recall = \frac{TP}{TP+FN}
 \label{eq:recall}
 \end{equation}
 
-Since our project is a multi-class classification project we will need to actually use Micro Averaging for the Recall in a similar fashion to how we used it on Precision. With this in mind we extend our simple equation \ref{eq:recall} of recall to incorporate micro averaging is illustrated in equation \ref{eq:recall_micro_avg}.
+Since our project is a multi-class classification project we will need to actually use Micro Averaging for the Recall in a similar fashion to how we used it on Precision. With this in mind we extend our simple equation \ref{eq:recall} of recall to incorporate micro averaging as defined in equation \ref{eq:recall_micro_avg}.
 
 \begin{equation}
 Recall_{MicroAvg} = \frac{(TP_1 + TP_2 + \ldots + TP_n)}{(TP_1 + TP_2 + \ldots + TP_n + FP_1 + FP_2 + \ldots + FP_n)}
 \label{eq:recall_micro_avg}
 \end{equation}
 
-The F1 score (eq: \ref{eq:f1-score}) in our project is important to assess the balance between precision and recall. In addition, the F1 score is especially relevant in multi-class classification scenarios where there are more than two classes.
+The F1 Score (eq: \ref{eq:f1-score}) in our project is important to assess the balance between precision and recall. In addition, the F1 Score holds significance in multi-class classification scenarios where there are more than two classes.
 
 \begin{equation}
 F1_{Score} = \frac{2*Precision*Recall}{Precision+Recall}
 \label{eq:f1-score}
 \end{equation}
 
-Lastly, we used micro averaging for the Recall, Precision, and F1 Score due to fact it give each label (Emotion see Table \ref{table:dataset_labels}) equal weight regardless of the class label and the number of labels counted.
+Lastly, we employed micro averaging for the Recall, Precision, and F1 Score due to the fact that it assigns equal weight to each label (Emotion, as seen in Table \ref{table:dataset_labels}), regardless of the class label and the number of labels taken into account. This approach ensures that the evaluation metrics give uniform importance to all labels, making it particularly suitable for scenarios where class imbalances exist or where an fair assessment of model performance across all emotion classes is required.
 
 \subsubsection{English Dataset Results}
 \label{sec:english-dataset-results}
@@ -703,6 +708,7 @@ With the help of the webpage (Figure \ref{fig:demo-api-webpage} on \pageref{fig:
 \end{table}
 
 \subsection{Findings and Implications for Improving Emotion Detection}
+\label{sec:findings-and-implications-for-improving}
 Based on the improvement results in Sections \ref{sec:english-dataset-results} and \ref{sec:german-dataset-results} it seems that using translation to extend both the English and German datasets resulted in a negative outcomes. The best outcomes were using a simple Linear Regression model on the English and German, however based on the F1 Score (Eq: \ref{eq:f1-score}) of the Random Forest Classifier it seems to perform the best on both English and German. This is because the false positive amount of one score on the accuracy is not taken into account and can easily skew the results when using a multi-class classification model.
 
 Considering the outcomes of data extension via translation, our approach of utilizing real-time translation for multi-language models through the creation of an API and translating text in real-time for both German and English appears to be unsatisfactory in terms of achieving any substantial improvement as well.
@@ -722,9 +728,9 @@ Taking into account the insufficiency of data, the implication of a lack of clas
 Options for improvement range from the straightforward approach of acquiring more data to the more nuanced strategy of leveraging existing labeled sentences and employing machines to generate derivatives. This would facilitate the creation of more intricate patterns for the machines to learn from. 
 
 \subsection{Conclusion and Future Work}
-It's crucial to ensure the quality and accuracy of extended data, especially when language translation is involved, to prevent introducing more noise than meaningful information into the training process. The implications of lack of data in ED analysis presented it self in this research that it wanted to try and overcome. Although the research did not garner any significant improvements by translating the German to English as a means on extending the English dataset, it actually made it the prediction results worse. We believe one of the main culprits of this that the data for learning based on eight classes was insufficient. As can be seen in Equation \ref{eq:sentence-per-class} from the previous section, the models seemingly resorted to memorizing the sentence rather than learning the intricacies of the labeled classes. This inference is drawn that certain labels exhibited better F1 Score performance, primarily due to their greater availability in the training data.
+It's crucial to ensure the quality and accuracy of extended data, especially when language translation is involved, to prevent introducing more noise than meaningful information into the training process. The implications of the lack of data in ED analysis presented itself in this research that sought to try and overcome these issues. Although the research did not yield any significant improvements through translating the German to English as a means of extending the English dataset, it ultimately worsened the prediction results. We believe one of the main culprits is that the data for learning based on eight classes was insufficient. As can be seen in Equation \ref{eq:sentence-per-class} from Section \ref{sec:findings-and-implications-for-improving}, the models seemingly resorted to memorizing the sentence rather than learning the intricacies of the labeled classes. This inference arises that certain labels exhibited better F1 Score performance, primarily due to their greater availability in the training data.
 
-Two areas of prospective research emerge: firstly, conducting further tests involving the translation of different models using diverse translation services. While Google Cloud's translation service sufficed for this research, superior paid subscription-based translation services are available. With the help of more data and better translation more concrete answers to prediction improvement may be achieved. Secondly, another avenue to overcome the lack of data involves employing AI to generate sentences that are similar yet distinct from the original. This could be achieved by providing a sentence and its associated labeled class to the AI for data creation. This approach aims to produce additional sentences imbued with similar emotional attributes, potentially expanding the labeled dataset.
+Two areas of prospective research emerge: firstly, conducting further tests involving the translation of different models using diverse translation services. While Google Cloud's translation service sufficed for this research, superior paid subscription-based translation services are available. With the help of more data and better translation more concrete answers to improving predictions may be achieved. Secondly, another avenue to overcome the lack of data involves employing AI to generate sentences that are similar yet distinct from the original. This could be achieved by providing a sentence and its associated labeled class to the AI for data creation. This approach aims to produce additional sentences imbued with similar emotional attributes, potentially expanding the labeled dataset.
 
 \clearpage
 \addcontentsline{toc}{section}{References}
